@@ -1,1 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Blurancy Cartify - Online shopping made simple.">
+<title>Blurancy Cartify | Shop Online</title>
 
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
+button{cursor:pointer}
+.header{background:#fff;padding:16px 6%;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px #ddd}
+.logo{font-size:25px;font-weight:800;white-space:nowrap}
+.logo span{color:#2563eb}
+.search{display:flex;flex:1}
+.search input{flex:1;padding:12px;border:1px solid #ddd;border-radius:8px 0 0 8px}
+.search button,.cart-btn{background:#2563eb;color:white;border:0;padding:12px 18px;font-weight:bold}
+.search button{border-radius:0 8px 8px 0}
+.cart-btn{border-radius:8px;background:#111827}
+nav{background:white;padding:10px 6%;display:flex;gap:10px;overflow:auto}
+nav button{border:0;background:#eef2ff;padding:9px 16px;border-radius:20px;white-space:nowrap}
+.hero{width:88%;max-width:1250px;margin:25px auto;padding:60px 45px;border-radius:20px;background:linear-gradient(135deg,#111827,#2563eb);color:white}
+.hero h1{font-size:clamp(35px,5vw,60px);margin-bottom:15px}
+.hero p{font-size:18px;color:#dbeafe;max-width:650px;margin-bottom:25px}
+.hero button{border:0;padding:13px 22px;border-radius:8px;color:#1d4ed8;font-weight:bold}
+.section{width:88%;max-width:1250px;margin:40px auto}
+.section h2{margin-bottom:18px}
+.products{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.product{background:white;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}
+.product-img{height:190px;background:#eef2f7;display:flex;align-items:center;justify-content:center;font-size:70px}
+.product-info{padding:15px}
+.product-info small{color:#64748b}
+.product-info h3{margin:6px 0}
+.price{font-size:19px;font-weight:bold;margin:10px 0}
+.old{text-decoration:line-through;color:#999;font-size:13px;margin-left:7px}
+.add{width:100%;border:0;background:#2563eb;color:white;padding:11px;border-radius:7px;font-weight:bold}
+.features{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.feature{background:white;padding:20px;border-radius:12px;border:1px solid #e5e7eb}
+.delivery{background:white;padding:25px;border-radius:14px;display:flex;justify-content:space-between;gap:20px}
+.delivery input{padding:12px;border:1px solid #ccc;border-radius:7px}
+.delivery button{padding:12px;border:0;background:#111827;color:white;border-radius:7px}
+footer{background:#111827;color:#d1d5db;padding:45px 6%;margin-top:60px}
+.footer-grid{max-width:1250px;margin:auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px}
+footer h3,footer h4{color:white;margin-bottom:12px}
+footer p,footer li{font-size:13px;margin-bottom:7px}
+footer ul{list-style:none}
+.cart{position:fixed;right:0;top:0;width:min(400px,100%);height:100%;background:white;z-index:30;padding:25px;box-shadow:-5px 0 20px #aaa;display:none;overflow:auto}
+.cart.open{display:block}
+.cart-item{padding:12px 0;border-bottom:1px solid #ddd}
+.close{float:right;border:0;background:#eee;padding:7px 12px}
+.checkout{width:100%;margin-top:20px;padding:14px;border:0;background:#16a34a;color:white;font-weight:bold;border-radius:8px}
+@media(max-width:900px){
+.products{grid-template-columns:repeat(2,1fr)}
+.features{grid-template-columns:repeat(2,1fr)}
+.footer-grid{grid-template-columns:repeat(2,1fr)}
+.header{flex-wrap:wrap}
+.search{order:3;flex-basis:100%}
+}
+@media(max-width:550px){
+.products,.features,.footer-grid{grid-template-columns:1fr}
+.hero{padding:40px 25px}
+.delivery{flex-direction:column}
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="logo">Blurancy <span>Cartify</span></div>
+
+  <div class="search">
+    <input id="search" placeholder="Search products..." oninput="searchProducts()">
+    <button>Search</button>
+  </div>
+
+  <button class="cart-btn" onclick="openCart()">🛒 Cart (<span id="count">0</span>)</button>
+</header>
+
+<nav>
+  <button onclick="filter('all')">All</button>
+  <button onclick="filter('electronics')">Electronics</button>
+  <button onclick="filter('fashion')">Fashion</button>
+  <button onclick="filter('home')">Home</button>
+  <button onclick="filter('beauty')">Beauty</button>
+  <button onclick="filter('accessories')">Accessories</button>
+</nav>
+
+<section class="hero">
+  <h1>Shop Smart.<br>Live Better.</h1>
+  <p>Discover useful products, great offers and a simple shopping experience with Blurancy Cartify.</p>
+  <button onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">
+    Shop Now
+  </button>
+</section>
+
+<section class="section features">
+  <div class="feature"><b>🛡️ Secure Shopping</b><br><small>Safe shopping experience.</small></div>
+  <div class="feature"><b>🚚 Convenient Delivery</b><br><small>Delivery across supported locations.</small></div>
+  <div class="feature"><b>💳 Easy Checkout</b><br><small>Simple checkout experience.</small></div>
+  <div class="feature"><b>💬 Customer Support</b><br><small>Help when you need it.</small></div>
+</section>
+
+<section class="section" id="products">
+<h2>Featured Products</h2>
+<div class="products" id="productGrid"></div>
+</section>
+
+<section class="section">
+<div class="delivery">
+<div>
+<h2>Check Delivery</h2>
+<p>Enter your 6-digit Indian PIN code.</p>
+<p id="pinResult"></p>
+</div>
+<div>
+<input id="pin" maxlength="6" placeholder="PIN code">
+<button onclick="checkPin()">Check</button>
+</div>
+</div>
+</section>
+
+<footer>
+<div class="footer-grid">
+<div>
+<h3>Blurancy Cartify</h3>
+<p>Original online shopping platform for convenient product discovery and ordering.</p>
+</div>
+<div>
+<h4>Shopping</h4>
+<ul><li>Products</li><li>Offers</li><li>Cart</li><li>Checkout</li></ul>
+</div>
+<div>
+<h4>Customer Care</h4>
+<ul><li>Help Center</li><li>Orders</li><li>Returns</li><li>Delivery</li></ul>
+</div>
+<div>
+<h4>Business</h4>
+<ul><li>Blurancy Cartify</li><li>India</li><li>Customer Support</li><li>Contact</li></ul>
+</div>
+</div>
+<p style="margin-top:30px;border-top:1px solid #374151;padding-top:20px">
+© 2026 Blurancy Cartify. All rights reserved.
+</p>
+</footer>
+
+<div class="cart" id="cart">
+<button class="close" onclick="closeCart()">✕</button>
+<h2>Your Cart</h2>
+<div id="cartItems"></div>
+<h3 style="margin-top:20px">Total: ₹<span id="total">0</span></h3>
+<button class="checkout" onclick="checkout()">Continue to Checkout</button>
+</div>
+
+<script>
+const products=[
+{id:1,name:"Wireless Audio Buds",cat:"electronics",price:1299,old:1999,icon:"🎧"},
+{id:2,name:"Smart Fitness Watch",cat:"electronics",price:2499,old:3999,icon:"⌚"},
+{id:3,name:"Casual Everyday Shirt",cat:"fashion",price:799,old:1299,icon:"👕"},
+{id:4,name:"Urban Backpack",cat:"accessories",price:1099,old:1699,icon:"🎒"},
+{id:5,name:"Home Aroma Diffuser",cat:"home",price:899,old:1499,icon:"🏠"},
+{id:6,name:"Daily Care Essentials",cat:"beauty",price:599,old:899,icon:"✨"},
+{id:7,name:"Portable Power Bank",cat:"electronics",price:999,old:1599,icon:"🔋"},
+{id:8,name:"Desk Organizer",cat:"home",price:499,old:799,icon:"📦"}
+];
+
+let cart=[];
+
+function money(n){return n.toLocaleString("en-IN")}
+
+function render(list=products){
+document.getElementById("productGrid").innerHTML=list.map(p=>`
+<div class="product">
+<div class="product-img">${p.icon}</div>
+<div class="product-info">
+<small>${p.cat}</small>
+<h3>${p.name}</h3>
+<div>⭐ 4.4</div>
+<div class="price">₹${money(p.price)}
+<span class="old">₹${money(p.old)}</span></div>
+<button class="add" onclick="add(${p.id})">Add to Cart</button>
+</div>
+</div>`).join("");
+}
+
+function add(id){
+let item=cart.find(x=>x.id===id);
+if(item)item.qty++;
+else cart.push({id,qty:1});
+update();
+}
+
+function update(){
+document.getElementById("count").textContent=
+cart.reduce((a,b)=>a+b.qty,0);
+
+document.getElementById("cartItems").innerHTML=
+cart.length?cart.map(item=>{
+let p=products.find(x=>x.id===item.id);
+return `<div class="cart-item">
+<b>${p.icon} ${p.name}</b><br>
+₹${money(p.price)} × ${item.qty}
+<br>
+<button onclick="change(${p.id},-1)">−</button>
+<button onclick="change(${p.id},1)">+</button>
+</div>`;
+}).join(""):"<p style='margin-top:30px'>Your cart is empty.</p>";
+
+let total=cart.reduce((a,item)=>{
+let p=products.find(x=>x.id===item.id);
+return a+p.price*item.qty;
+},0);
+
+document.getElementById("total").textContent=money(total);
+}
+
+function change(id,n){
+let item=cart.find(x=>x.id===id);
+if(!item)return;
+item.qty+=n;
+if(item.qty<=0)cart=cart.filter(x=>x.id!==id);
+update();
+}
+
+function openCart(){
+document.getElementById("cart").classList.add("open");
+update();
+}
+
+function closeCart(){
+document.getElementById("cart").classList.remove("open");
+}
+
+function filter(cat){
+render(cat==="all"?products:products.filter(p=>p.cat===cat));
+}
+
+function searchProducts(){
+let q=document.getElementById("search").value.toLowerCase();
+render(products.filter(p=>
+p.name.toLowerCase().includes(q)||
+p.cat.toLowerCase().includes(q)
+));
+}
+
+function checkPin(){
+let pin=document.getElementById("pin").value;
+document.getElementById("pinResult").textContent=
+/^[0-9]{6}$/.test(pin)
+?"PIN received. Delivery availability will be checked by the connected delivery service."
+:"Please enter a valid 6-digit PIN code.";
+}
+
+function checkout(){
+if(!cart.length){
+alert("Your cart is empty.");
+return;
+}
+alert("Checkout is ready for payment-gateway integration.");
+}
+
+render();
+update();
+</script>
+
+</body>
+</html>
