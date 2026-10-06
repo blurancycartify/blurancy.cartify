@@ -1,219 +1,585 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Blurancy Cartify</title>
+    <title>Blurancy Cartify</title>
+    <meta name="description" content="Blurancy Cartify - Online Shopping">
+    <meta name="theme-color" content="#111827">
 
-  <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 
 <body>
 
-<header class="topbar">
+    <!-- HEADER -->
+    <header class="site-header">
+        <div class="header-container">
 
-  <a class="brand" href="./">
-    Blurancy Cartify
-  </a>
+            <a href="#" class="brand" id="homeBtn">
+                <span class="brand-icon">🛒</span>
+                <span>Blurancy Cartify</span>
+            </a>
 
-  <form id="searchForm" class="search">
-    <input
-      id="searchInput"
-      type="search"
-      placeholder="Search products..."
-      autocomplete="off"
-    >
-    <button type="submit">Search</button>
-  </form>
+            <form id="searchForm" class="search-box">
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Search products..."
+                    autocomplete="off"
+                >
+                <button type="submit">Search</button>
+            </form>
 
-  <div class="actions">
-    <button id="loginBtn" type="button">Login</button>
+            <div class="header-actions">
 
-    <button id="cartBtn" type="button">
-      Cart (<span id="cartCount">0</span>)
-    </button>
-  </div>
+                <button id="loginBtn" class="header-btn" type="button">
+                    Login
+                </button>
 
-</header>
+                <button id="logoutBtn" class="header-btn hidden" type="button">
+                    Logout
+                </button>
 
+                <button id="cartBtn" class="cart-btn" type="button">
+                    🛒 Cart
+                    <span id="cartCount">0</span>
+                </button>
 
-<main>
+            </div>
+        </div>
 
-  <section class="hero">
-    <h1>Shop at Blurancy Cartify</h1>
-    <p>
-      100 products • Secure login • Cart • PayU checkout
-    </p>
-  </section>
-
-
-  <section class="filters">
-
-    <select id="categoryFilter">
-      <option value="">All categories</option>
-    </select>
-
-    <input
-      id="minPrice"
-      type="number"
-      min="0"
-      placeholder="Min ₹"
-    >
-
-    <input
-      id="maxPrice"
-      type="number"
-      min="0"
-      placeholder="Max ₹"
-    >
-
-    <button id="clearFilters" type="button">
-      Clear
-    </button>
-
-  </section>
+        <!-- USER STATUS -->
+        <div id="userStatus" class="user-status hidden"></div>
+    </header>
 
 
-  <section id="productGrid" class="grid"></section>
+    <!-- CATEGORY BAR -->
+    <nav class="category-bar">
+        <div class="category-container">
 
-</main>
+            <button class="category-btn active" data-category="All">
+                All
+            </button>
+
+            <button class="category-btn" data-category="Electronics">
+                Electronics
+            </button>
+
+            <button class="category-btn" data-category="Computers">
+                Computers
+            </button>
+
+            <button class="category-btn" data-category="Fashion">
+                Fashion
+            </button>
+
+            <button class="category-btn" data-category="Footwear">
+                Footwear
+            </button>
+
+            <button class="category-btn" data-category="Home">
+                Home
+            </button>
+
+            <button class="category-btn" data-category="Beauty">
+                Beauty
+            </button>
+
+            <button class="category-btn" data-category="Grocery">
+                Grocery
+            </button>
+
+            <button class="category-btn" data-category="Fitness">
+                Fitness
+            </button>
+
+            <button class="category-btn" data-category="Books">
+                Books
+            </button>
+
+            <button class="category-btn" data-category="Gaming">
+                Gaming
+            </button>
+
+            <button class="category-btn" data-category="Toys">
+                Toys
+            </button>
+
+            <button class="category-btn" data-category="Bags">
+                Bags
+            </button>
+
+            <button class="category-btn" data-category="Travel">
+                Travel
+            </button>
+
+        </div>
+    </nav>
 
 
-<!-- LOGIN MODAL -->
+    <!-- HERO -->
+    <main>
 
-<div id="loginModal" class="modal hidden">
+        <section class="hero">
+            <div class="hero-content">
 
-  <div class="modalbox">
+                <h1>Welcome to Blurancy Cartify</h1>
 
-    <button
-      class="close"
-      data-close="loginModal"
-      type="button"
-    >
-      ×
-    </button>
+                <p>
+                    Shop electronics, fashion, home products and more.
+                </p>
 
-    <h2>Secure Phone Login</h2>
+                <button id="shopNowBtn" class="primary-btn" type="button">
+                    Shop Now
+                </button>
 
-    <input
-      id="phoneNumber"
-      type="tel"
-      placeholder="+91XXXXXXXXXX"
-      inputmode="tel"
-    >
-
-    <button id="sendOtpBtn" type="button">
-      Send OTP
-    </button>
-
-    <input
-      id="otpCode"
-      type="text"
-      placeholder="6-digit OTP"
-      inputmode="numeric"
-      maxlength="6"
-    >
-
-    <button id="verifyOtpBtn" type="button">
-      Verify OTP
-    </button>
-
-    <p id="authMessage"></p>
-
-  </div>
-
-</div>
+            </div>
+        </section>
 
 
-<!-- CART MODAL -->
+        <!-- PRODUCTS -->
+        <section class="products-section">
 
-<div id="cartModal" class="modal hidden">
+            <div class="section-heading">
+                <div>
+                    <h2>Products</h2>
+                    <p id="productResultText">
+                        Browse our products
+                    </p>
+                </div>
 
-  <div class="modalbox wide">
+                <select id="sortSelect" class="sort-select">
+                    <option value="default">Sort</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="name">Name: A-Z</option>
+                </select>
+            </div>
 
-    <button
-      class="close"
-      data-close="cartModal"
-      type="button"
-    >
-      ×
-    </button>
+            <div id="productGrid" class="product-grid">
+                <!-- Products are loaded by assets/app.js -->
+            </div>
 
-    <h2>Your Cart</h2>
+            <div id="noProducts" class="no-products hidden">
+                <h3>No products found</h3>
+                <p>Try another search or category.</p>
+            </div>
 
-    <div id="cartItems"></div>
+        </section>
 
-    <div class="checkout">
+    </main>
 
-      <h3>Checkout Details</h3>
 
-      <input
-        id="customerName"
-        type="text"
-        placeholder="Full name"
-      >
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal hidden">
 
-      <input
-        id="customerEmail"
-        type="email"
-        placeholder="Email"
-      >
+        <div class="modal-overlay" data-close="loginModal"></div>
 
-      <input
-        id="customerPhone"
-        type="tel"
-        placeholder="Phone"
-      >
+        <div class="modal-content">
 
-      <input
-        id="shippingAddress"
-        type="text"
-        placeholder="Delivery address"
-      >
+            <button
+                class="modal-close"
+                type="button"
+                data-close="loginModal"
+                aria-label="Close"
+            >
+                ×
+            </button>
 
-      <input
-        id="shippingPin"
-        type="text"
-        placeholder="6-digit PIN"
-        inputmode="numeric"
-        maxlength="6"
-      >
+            <h2>Login</h2>
 
-      <button id="payuBtn" type="button">
-        Pay Securely with PayU
-      </button>
+            <p class="modal-subtitle">
+                Login securely using your phone number.
+            </p>
 
-      <p id="checkoutMessage"></p>
+            <!-- PHONE STEP -->
+            <div id="phoneLoginStep">
 
+                <label for="phoneInput">
+                    Phone Number
+                </label>
+
+                <input
+                    type="tel"
+                    id="phoneInput"
+                    placeholder="+91XXXXXXXXXX"
+                    autocomplete="tel"
+                    maxlength="16"
+                >
+
+                <button
+                    id="sendOtpBtn"
+                    class="primary-btn full-width"
+                    type="button"
+                >
+                    Send OTP
+                </button>
+
+            </div>
+
+
+            <!-- OTP STEP -->
+            <div id="otpLoginStep" class="hidden">
+
+                <label for="otpInput">
+                    Enter OTP
+                </label>
+
+                <input
+                    type="text"
+                    id="otpInput"
+                    placeholder="Enter OTP"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    maxlength="6"
+                >
+
+                <button
+                    id="verifyOtpBtn"
+                    class="primary-btn full-width"
+                    type="button"
+                >
+                    Verify OTP
+                </button>
+
+                <button
+                    id="backToPhoneBtn"
+                    class="secondary-btn full-width"
+                    type="button"
+                >
+                    Change Number
+                </button>
+
+            </div>
+
+            <p id="loginMessage" class="form-message"></p>
+
+        </div>
     </div>
 
-  </div>
 
-</div>
+    <!-- CART DRAWER -->
+    <aside id="cartDrawer" class="cart-drawer">
+
+        <div class="cart-header">
+
+            <h2>Your Cart</h2>
+
+            <button
+                id="closeCartBtn"
+                class="modal-close"
+                type="button"
+                aria-label="Close cart"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div id="cartItems" class="cart-items">
+            <!-- Cart items loaded by app.js -->
+        </div>
+
+        <div class="cart-footer">
+
+            <div class="cart-summary-row">
+                <span>Subtotal</span>
+                <strong id="cartSubtotal">₹0.00</strong>
+            </div>
+
+            <div class="cart-summary-row">
+                <span>Discount</span>
+                <strong id="cartDiscount">₹0.00</strong>
+            </div>
+
+            <div class="cart-summary-row">
+                <span>GST</span>
+                <strong id="cartGst">₹0.00</strong>
+            </div>
+
+            <div class="cart-summary-row total-row">
+                <span>Total</span>
+                <strong id="cartTotal">₹0.00</strong>
+            </div>
+
+            <button
+                id="checkoutBtn"
+                class="primary-btn full-width"
+                type="button"
+            >
+                Proceed to Checkout
+            </button>
+
+        </div>
+
+    </aside>
 
 
-<footer>
-
-  <p>
-    © 2026 Blurancy Cartify
-  </p>
-
-  <p>
-    Publish Privacy Policy, Terms, Refund/Return,
-    Shipping and Contact pages before merchant launch.
-  </p>
-
-</footer>
+    <!-- CART OVERLAY -->
+    <div id="cartOverlay" class="cart-overlay hidden"></div>
 
 
-<!-- SUPABASE CDN -->
+    <!-- CHECKOUT MODAL -->
+    <div id="checkoutModal" class="modal hidden">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <div class="modal-overlay" data-close="checkoutModal"></div>
 
-<!-- YOUR APPLICATION -->
+        <div class="modal-content checkout-content">
 
-<script src="assets/app.js"></script>
+            <button
+                class="modal-close"
+                type="button"
+                data-close="checkoutModal"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+            <h2>Checkout</h2>
+
+            <p class="modal-subtitle">
+                Enter your details before continuing to payment.
+            </p>
+
+            <form id="checkoutForm">
+
+                <label for="checkoutName">
+                    Full Name
+                </label>
+
+                <input
+                    type="text"
+                    id="checkoutName"
+                    name="name"
+                    placeholder="Your full name"
+                    autocomplete="name"
+                    required
+                >
+
+
+                <label for="checkoutEmail">
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="checkoutEmail"
+                    name="email"
+                    placeholder="you@example.com"
+                    autocomplete="email"
+                    required
+                >
+
+
+                <label for="checkoutPhone">
+                    Phone
+                </label>
+
+                <input
+                    type="tel"
+                    id="checkoutPhone"
+                    name="phone"
+                    placeholder="+91XXXXXXXXXX"
+                    autocomplete="tel"
+                    required
+                >
+
+
+                <label for="checkoutAddress">
+                    Delivery Address
+                </label>
+
+                <textarea
+                    id="checkoutAddress"
+                    name="address"
+                    placeholder="Enter your complete delivery address"
+                    rows="4"
+                    required
+                ></textarea>
+
+
+                <label for="checkoutPincode">
+                    PIN Code
+                </label>
+
+                <input
+                    type="text"
+                    id="checkoutPincode"
+                    name="pincode"
+                    placeholder="6-digit PIN code"
+                    inputmode="numeric"
+                    maxlength="6"
+                    required
+                >
+
+
+                <div class="checkout-total">
+                    <span>Payable Amount</span>
+                    <strong id="checkoutTotal">₹0.00</strong>
+                </div>
+
+
+                <button
+                    id="payNowBtn"
+                    class="primary-btn full-width"
+                    type="submit"
+                >
+                    Continue to PayU
+                </button>
+
+                <p id="checkoutMessage" class="form-message"></p>
+
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- PRODUCT DETAILS MODAL -->
+    <div id="productModal" class="modal hidden">
+
+        <div class="modal-overlay" data-close="productModal"></div>
+
+        <div class="modal-content product-detail-content">
+
+            <button
+                class="modal-close"
+                type="button"
+                data-close="productModal"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+            <div id="productDetails">
+                <!-- Product details loaded by app.js -->
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- INFORMATION MODAL -->
+    <div id="infoModal" class="modal hidden">
+
+        <div class="modal-overlay" data-close="infoModal"></div>
+
+        <div class="modal-content">
+
+            <button
+                class="modal-close"
+                type="button"
+                data-close="infoModal"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+            <div id="infoContent"></div>
+
+        </div>
+    </div>
+
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+
+        <div class="footer-container">
+
+            <div class="footer-column">
+
+                <h3>Blurancy Cartify</h3>
+
+                <p>
+                    Your online shopping destination.
+                </p>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>Quick Links</h3>
+
+                <button
+                    class="footer-link"
+                    data-info="about"
+                    type="button"
+                >
+                    About Us
+                </button>
+
+                <button
+                    class="footer-link"
+                    data-info="contact"
+                    type="button"
+                >
+                    Contact
+                </button>
+
+            </div>
+
+
+            <div class="footer-column">
+
+                <h3>Policies</h3>
+
+                <button
+                    class="footer-link"
+                    data-info="privacy"
+                    type="button"
+                >
+                    Privacy Policy
+                </button>
+
+                <button
+                    class="footer-link"
+                    data-info="terms"
+                    type="button"
+                >
+                    Terms & Conditions
+                </button>
+
+                <button
+                    class="footer-link"
+                    data-info="refund"
+                    type="button"
+                >
+                    Refund & Return
+                </button>
+
+                <button
+                    class="footer-link"
+                    data-info="shipping"
+                    type="button"
+                >
+                    Shipping Policy
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <p>
+                © <span id="currentYear"></span>
+                Blurancy Cartify. All rights reserved.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- SUPABASE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- YOUR APPLICATION JAVASCRIPT -->
+    <script src="assets/app.js"></script>
 
 </body>
 </html>
