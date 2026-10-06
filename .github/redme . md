@@ -1,0 +1,133 @@
+# Blurancy Cartify
+
+Production-oriented e-commerce project.
+
+## Features
+
+- 100 products
+- Product search
+- Category filtering
+- Price filtering
+- Shopping cart
+- Phone OTP authentication
+- Supabase integration
+- PayU hosted checkout structure
+- Server-side PayU hash generation
+- Server-side product/price validation
+- Supabase order persistence
+- PayU callback endpoints
+- PayU webhook endpoint
+
+## Project structure
+
+blurancy-cartify/
+
+├── index.html
+│
+├── assets/
+│   ├── style.css
+│   └── app.js
+│
+├── backend/
+│   ├── server.js
+│   ├── package.json
+│   ├── .env
+│   └── supabase.sql
+│
+├── .gitignore
+│
+└── README.md
+
+
+## IMPORTANT
+
+Do not put PayU Live Salt in app.js.
+
+Do not put Supabase service-role/secret key in app.js.
+
+Do not commit backend/.env to GitHub.
+
+
+## Frontend configuration
+
+Open:
+
+assets/app.js
+
+Set:
+
+SUPABASE_URL =
+"YOUR_REAL_SUPABASE_PROJECT_URL";
+
+SUPABASE_PUBLISHABLE_KEY =
+"YOUR_REAL_SUPABASE_PUBLISHABLE_KEY";
+
+API_BASE_URL =
+"YOUR_REAL_HTTPS_BACKEND_URL";
+
+
+## Backend configuration
+
+Create:
+
+backend/.env
+
+Set:
+
+PAYU_KEY=
+YOUR_REAL_PAYU_LIVE_KEY
+
+PAYU_SALT=
+YOUR_REAL_PAYU_LIVE_SALT
+
+SUPABASE_URL=
+YOUR_REAL_SUPABASE_PROJECT_URL
+
+SUPABASE_SERVICE_ROLE_KEY=
+YOUR_SERVER_ONLY_SUPABASE_SECRET
+
+BACKEND_URL=
+YOUR_REAL_HTTPS_BACKEND_URL
+
+
+## Supabase
+
+Run backend/supabase.sql
+in the Supabase SQL editor.
+
+
+## PayU
+
+Configure the following URLs
+in the PayU merchant dashboard:
+
+Success:
+
+https://YOUR-BACKEND-DOMAIN/api/payu/success
+
+Failure:
+
+https://YOUR-BACKEND-DOMAIN/api/payu/failure
+
+Webhook:
+
+https://YOUR-BACKEND-DOMAIN/api/payu/webhook
+
+
+## Before accepting real payments
+
+Complete:
+
+1. PayU merchant activation
+2. PayU Live Key/Salt
+3. HTTPS backend deployment
+4. Supabase database
+5. PayU webhook configuration
+6. Payment response verification
+7. Payment verification/reconciliation
+8. Real product images
+9. Privacy Policy
+10. Terms and Conditions
+11. Refund/Return Policy
+12. Shipping Policy
+13. Contact page
