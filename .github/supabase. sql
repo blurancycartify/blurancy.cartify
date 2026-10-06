@@ -1,0 +1,53 @@
+-- =========================================================
+-- BLURANCY CARTIFY
+-- SUPABASE ORDERS DATABASE
+-- =========================================================
+
+create table if not exists public.orders (
+
+  id bigint
+    generated always as identity
+    primary key,
+
+  txnid text
+    unique
+    not null,
+
+  status text
+    not null
+    default 'pending',
+
+  amount numeric(12,2)
+    not null,
+
+  customer jsonb
+    not null,
+
+  items jsonb
+    not null,
+
+  payment_provider text
+    not null
+    default 'payu',
+
+  callback_status text,
+
+  callback_payload jsonb,
+
+  webhook_payload jsonb,
+
+  created_at timestamptz
+    not null
+    default now(),
+
+  updated_at timestamptz
+    not null
+    default now()
+
+);
+
+
+-- Enable Row Level Security
+
+alter table public.orders
+enable row level security;
