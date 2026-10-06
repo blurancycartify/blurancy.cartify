@@ -2,98 +2,218 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Blurancy Cartify - online shopping">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
   <title>Blurancy Cartify</title>
+
   <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
+
 <header class="topbar">
-  <a class="brand" href="#" aria-label="Blurancy Cartify home">
-    <span class="logo">B</span><span>Blurancy <b>Cartify</b></span>
+
+  <a class="brand" href="./">
+    Blurancy Cartify
   </a>
+
   <form id="searchForm" class="search">
-    <input id="searchInput" type="search" placeholder="Search products..." autocomplete="off">
-    <button aria-label="Search">⌕</button>
+    <input
+      id="searchInput"
+      type="search"
+      placeholder="Search products..."
+      autocomplete="off"
+    >
+    <button type="submit">Search</button>
   </form>
-  <nav>
-    <button class="navbtn" id="loginBtn">Login</button>
-    <button class="cartbtn" id="cartBtn">Cart <span id="cartCount">0</span></button>
-  </nav>
+
+  <div class="actions">
+    <button id="loginBtn" type="button">Login</button>
+
+    <button id="cartBtn" type="button">
+      Cart (<span id="cartCount">0</span>)
+    </button>
+  </div>
+
 </header>
 
+
 <main>
+
   <section class="hero">
-    <div>
-      <p class="eyebrow">WELCOME TO BLURANCY CARTIFY</p>
-      <h1>Shop smarter.<br><span>Live better.</span></h1>
-      <p class="hero-copy">Discover useful products, clear prices and a simple shopping experience.</p>
-      <button class="primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop now</button>
-    </div>
-    <div class="hero-card">
-      <div class="hero-badge">SPECIAL OFFER</div>
-      <strong>Up to 40% OFF</strong>
-      <span>Selected products</span>
-    </div>
+    <h1>Shop at Blurancy Cartify</h1>
+    <p>
+      100 products • Secure login • Cart • PayU checkout
+    </p>
   </section>
 
-  <section class="features">
-    <div><b>🚚 Delivery</b><span>Service across India</span></div>
-    <div><b>🔒 Secure</b><span>Protected checkout design</span></div>
-    <div><b>↩ Easy returns</b><span>Simple return information</span></div>
-    <div><b>₹ Indian prices</b><span>GST-ready price display</span></div>
+
+  <section class="filters">
+
+    <select id="categoryFilter">
+      <option value="">All categories</option>
+    </select>
+
+    <input
+      id="minPrice"
+      type="number"
+      min="0"
+      placeholder="Min ₹"
+    >
+
+    <input
+      id="maxPrice"
+      type="number"
+      min="0"
+      placeholder="Max ₹"
+    >
+
+    <button id="clearFilters" type="button">
+      Clear
+    </button>
+
   </section>
 
-  <section class="section" id="products">
-    <div class="section-head">
-      <div><p class="eyebrow">SHOP</p><h2>Featured products</h2></div>
-      <select id="categoryFilter" aria-label="Filter products">
-        <option value="all">All categories</option>
-        <option value="electronics">Electronics</option>
-        <option value="home">Home</option>
-        <option value="fashion">Fashion</option>
-      </select>
-    </div>
-    <div id="productGrid" class="grid"></div>
-  </section>
+
+  <section id="productGrid" class="grid"></section>
+
 </main>
 
+
+<!-- LOGIN MODAL -->
+
+<div id="loginModal" class="modal hidden">
+
+  <div class="modalbox">
+
+    <button
+      class="close"
+      data-close="loginModal"
+      type="button"
+    >
+      ×
+    </button>
+
+    <h2>Secure Phone Login</h2>
+
+    <input
+      id="phoneNumber"
+      type="tel"
+      placeholder="+91XXXXXXXXXX"
+      inputmode="tel"
+    >
+
+    <button id="sendOtpBtn" type="button">
+      Send OTP
+    </button>
+
+    <input
+      id="otpCode"
+      type="text"
+      placeholder="6-digit OTP"
+      inputmode="numeric"
+      maxlength="6"
+    >
+
+    <button id="verifyOtpBtn" type="button">
+      Verify OTP
+    </button>
+
+    <p id="authMessage"></p>
+
+  </div>
+
+</div>
+
+
+<!-- CART MODAL -->
+
+<div id="cartModal" class="modal hidden">
+
+  <div class="modalbox wide">
+
+    <button
+      class="close"
+      data-close="cartModal"
+      type="button"
+    >
+      ×
+    </button>
+
+    <h2>Your Cart</h2>
+
+    <div id="cartItems"></div>
+
+    <div class="checkout">
+
+      <h3>Checkout Details</h3>
+
+      <input
+        id="customerName"
+        type="text"
+        placeholder="Full name"
+      >
+
+      <input
+        id="customerEmail"
+        type="email"
+        placeholder="Email"
+      >
+
+      <input
+        id="customerPhone"
+        type="tel"
+        placeholder="Phone"
+      >
+
+      <input
+        id="shippingAddress"
+        type="text"
+        placeholder="Delivery address"
+      >
+
+      <input
+        id="shippingPin"
+        type="text"
+        placeholder="6-digit PIN"
+        inputmode="numeric"
+        maxlength="6"
+      >
+
+      <button id="payuBtn" type="button">
+        Pay Securely with PayU
+      </button>
+
+      <p id="checkoutMessage"></p>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <footer>
-  <div><strong>Blurancy Cartify</strong><p>Independent shopping website. Not affiliated with Flipkart.</p></div>
-  <div><a href="#products">Products</a><a href="#" onclick="openInfo('Privacy Policy')">Privacy</a><a href="#" onclick="openInfo('Terms & Conditions')">Terms</a><a href="#" onclick="openInfo('Refund Policy')">Refunds</a></div>
+
+  <p>
+    © 2026 Blurancy Cartify
+  </p>
+
+  <p>
+    Publish Privacy Policy, Terms, Refund/Return,
+    Shipping and Contact pages before merchant launch.
+  </p>
+
 </footer>
 
-<div class="overlay" id="overlay" hidden></div>
-<aside class="drawer" id="cartDrawer" aria-label="Shopping cart">
-  <div class="drawer-head"><h2>Your cart</h2><button onclick="closePanels()">×</button></div>
-  <div id="cartItems"></div>
-  <div class="cart-total"><span>Total</span><strong id="cartTotal">₹0</strong></div>
-  <button class="primary full" onclick="checkout()">Proceed to checkout</button>
-  <p class="small">Demo checkout UI. Connect your production payment provider and backend before accepting real payments.</p>
-</aside>
 
-<div class="modal" id="loginModal" hidden>
-  <div class="modal-box">
-    <button class="close" onclick="closePanels()">×</button>
-    <h2>Welcome back</h2><p>Sign in to Blurancy Cartify.</p>
-    <input placeholder="Email address" type="email">
-    <input placeholder="Password" type="password">
-    <button class="primary full" onclick="demoLogin()">Login</button>
-    <p id="loginMsg" class="small"></p>
-  </div>
-</div>
+<!-- SUPABASE CDN -->
 
-<div class="modal" id="infoModal" hidden>
-  <div class="modal-box"><button class="close" onclick="closePanels()">×</button><h2 id="infoTitle"></h2><p id="infoText"></p></div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- YOUR APPLICATION -->
 
 <script src="assets/app.js"></script>
-</body>
-</html>
-<link rel="stylesheet" href="assets/style.css">
-<script src="assets/app.js"></script>
-    <!-- your website content -->
 
-    <script src="assets/app.js"></script>
 </body>
 </html>
