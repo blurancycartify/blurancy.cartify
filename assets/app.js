@@ -1,4 +1,10 @@
-document.addEventListener("DOMContentLoaded", function () {
+ const SUPABASE_URL = "YOUR_PROJECT_URL";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_XW68RVEL3u7sRrHiZ0PoFQ_gTmfvncj";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);const SUPABASE_URL = "YOUR_PROJECT_URL";const SUPABASE_URL = "https://xxxxxxxxxxxx.supabase.co";document.addEventListener("DOMContentLoaded", function () {
 
   const products = [
     {
