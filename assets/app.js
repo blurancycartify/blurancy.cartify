@@ -1,4 +1,9 @@
-```javascript
+<script src="assets/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
+   ```javascript
 "use strict";
 
 /* =========================================================
