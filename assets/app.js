@@ -1,28 +1,11 @@
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+```javascript
+"use strict";
 
-const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_XW68RVEL3u7sRrHiZ0PoFQ_gTmfvncj";
+/* =========================================================
+   BLURANCY CARTIFY
+   Complete frontend application
+   ========================================================= */
 
-const API_BASE_URL = "YOUR_BACKEND_URL";  "use strict";
-
-/*
- * BLURANCY CARTIFY
- * Frontend application
- *
- * Includes:
- * - 100 products
- * - Product display
- * - Search
- * - Category filtering
- * - Sorting
- * - Product details
- * - Cart
- * - Quantity controls
- * - Login with Supabase Phone OTP
- * - Logout
- * - Checkout form
- * - PayU backend connection
- */
 
 /* =========================================================
    CONFIGURATION
@@ -33,15 +16,6 @@ const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_XW68RVEL3u7sRrHiZ0PoFQ_gTmfvncj";
 
-/*
- * IMPORTANT:
- * Replace this with your DEPLOYED backend URL.
- *
- * Example:
- * https://your-backend.example.com
- *
- * Do NOT put the PayU merchant salt here.
- */
 const API_BASE_URL = "YOUR_BACKEND_URL";
 
 
@@ -53,7 +27,6 @@ let supabaseClient = null;
 
 if (
     window.supabase &&
-    SUPABASE_URL &&
     SUPABASE_URL !== "YOUR_SUPABASE_PROJECT_URL" &&
     SUPABASE_PUBLISHABLE_KEY
 ) {
@@ -74,6 +47,7 @@ const products = [
     { id: 3, name: "Cotton T-Shirt", category: "Fashion", price: 499, oldPrice: 999 },
     { id: 4, name: "Running Shoes", category: "Fashion", price: 1299, oldPrice: 2499 },
     { id: 5, name: "LED Desk Lamp", category: "Home", price: 699, oldPrice: 1299 },
+
     { id: 6, name: "Portable Bluetooth Speaker", category: "Electronics", price: 1199, oldPrice: 2199 },
     { id: 7, name: "USB-C Fast Charger", category: "Electronics", price: 799, oldPrice: 1499 },
     { id: 8, name: "Braided USB-C Cable", category: "Electronics", price: 299, oldPrice: 599 },
@@ -191,11 +165,10 @@ const products = [
 
 
 /* =========================================================
-   APPLICATION STATE
+   STATE
    ========================================================= */
 
 let cart = loadCart();
-
 let selectedCategory = "All";
 let currentSearch = "";
 let currentSort = "default";
@@ -203,7 +176,7 @@ let currentProduct = null;
 
 
 /* =========================================================
-   DOM HELPERS
+   HELPERS
    ========================================================= */
 
 function $(id) {
@@ -227,15 +200,17 @@ function escapeHtml(value) {
         .replaceAll("'", "&#039;");
 }
 
+function showMessage(message) {
+    alert(message);
+}
+
 
 /* =========================================================
-   PRODUCT IMAGES
+   PRODUCT IMAGE
    ========================================================= */
 
 function productImage(product) {
-    const text = encodeURIComponent(product.name);
-
-    return `https://placehold.co/600x450/png?text=${text}`;
+    return `https://placehold.co/600x450/png?text=${encodeURIComponent(product.name)}`;
 }
 
 
@@ -244,7 +219,6 @@ function productImage(product) {
    ========================================================= */
 
 function getVisibleProducts() {
-
     let result = products.filter(product => {
 
         const categoryMatch =
@@ -296,7 +270,6 @@ function renderProducts() {
     grid.innerHTML = "";
 
     if (visibleProducts.length === 0) {
-
         empty?.classList.remove("hidden");
 
         if (resultText) {
@@ -319,15 +292,17 @@ function renderProducts() {
 
         card.className = "product-card";
 
-        const discount = product.oldPrice > product.price
-            ? Math.round(
-                ((product.oldPrice - product.price) /
+        const discount =
+            product.oldPrice > product.price
+                ? Math.round(
+                    ((product.oldPrice - product.price) /
                     product.oldPrice) * 100
-            )
-            : 0;
+                )
+                : 0;
 
         card.innerHTML = `
             <div class="product-image-wrapper">
+
                 <img
                     class="product-image"
                     src="${productImage(product)}"
@@ -340,6 +315,7 @@ function renderProducts() {
                         ? `<span class="discount-badge">${discount}% OFF</span>`
                         : ""
                 }
+
             </div>
 
             <div class="product-card-body">
@@ -353,12 +329,15 @@ function renderProducts() {
                 </h3>
 
                 <div class="product-price">
-                    <strong>${money(product.price)}</strong>
-                    ${
-                        product.oldPrice
-                            ? `<del>${money(product.oldPrice)}</del>`
-                            : ""
-                    }
+
+                    <strong>
+                        ${money(product.price)}
+                    </strong>
+
+                    <del>
+                        ${money(product.oldPrice)}
+                    </del>
+
                 </div>
 
                 <div class="product-actions">
@@ -390,6 +369,71 @@ function renderProducts() {
 
 
 /* =========================================================
+   PRODUCT DETAILS
+   ========================================================= */
+
+function openProductDetails(id) {
+
+    const product = products.find(
+        item => item.id === Number(id)
+    );
+
+    if (!product) return;
+
+    currentProduct = product;
+
+    const container = $("productDetails");
+
+    if (!container) return;
+
+    container.innerHTML = `
+        <img
+            class="product-detail-image"
+            src="${productImage(product)}"
+            alt="${escapeHtml(product.name)}"
+        >
+
+        <div class="product-detail-info">
+
+            <div class="product-category">
+                ${escapeHtml(product.category)}
+            </div>
+
+            <h2>
+                ${escapeHtml(product.name)}
+            </h2>
+
+            <div class="product-price">
+                <strong>${money(product.price)}</strong>
+                <del>${money(product.oldPrice)}</del>
+            </div>
+
+            <p>
+                Quality ${escapeHtml(product.name)}
+                available from Blurancy Cartify.
+            </p>
+
+            <button
+                class="primary-btn full-width"
+                type="button"
+                id="detailAddCartBtn"
+            >
+                Add to Cart
+            </button>
+
+        </div>
+    `;
+
+    $("detailAddCartBtn")?.addEventListener(
+        "click",
+        () => addToCart(product.id)
+    );
+
+    openModal("productModal");
+}
+
+
+/* =========================================================
    CART STORAGE
    ========================================================= */
 
@@ -404,21 +448,17 @@ function loadCart() {
 
         const parsed = JSON.parse(saved);
 
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
+        if (!Array.isArray(parsed)) return [];
 
         return parsed
-            .filter(item => {
-                return (
-                    Number.isInteger(Number(item.id)) &&
-                    Number(item.quantity) > 0 &&
-                    products.some(
-                        product =>
-                            product.id === Number(item.id)
-                    )
-                );
-            })
+            .filter(item =>
+                Number.isInteger(Number(item.id)) &&
+                Number(item.quantity) > 0 &&
+                products.some(
+                    product =>
+                        product.id === Number(item.id)
+                )
+            )
             .map(item => ({
                 id: Number(item.id),
                 quantity: Math.min(
@@ -435,7 +475,6 @@ function loadCart() {
     }
 }
 
-
 function saveCart() {
 
     localStorage.setItem(
@@ -446,7 +485,7 @@ function saveCart() {
 
 
 /* =========================================================
-   CART FUNCTIONS
+   CART
    ========================================================= */
 
 function findProduct(id) {
@@ -456,13 +495,12 @@ function findProduct(id) {
     );
 }
 
-
 function addToCart(id, quantity = 1) {
 
     const product = findProduct(id);
 
     if (!product) {
-        showMessage("Product is unavailable.");
+        showMessage("Product unavailable.");
         return;
     }
 
@@ -492,14 +530,12 @@ function addToCart(id, quantity = 1) {
     }
 
     saveCart();
-
     renderCart();
 
-    openCart();
-
-    showMessage(`${product.name} added to cart.`);
+    showMessage(
+        `${product.name} added to cart.`
+    );
 }
-
 
 function removeFromCart(id) {
 
@@ -508,10 +544,8 @@ function removeFromCart(id) {
     );
 
     saveCart();
-
     renderCart();
 }
-
 
 function changeQuantity(id, change) {
 
@@ -534,37 +568,31 @@ function changeQuantity(id, change) {
     );
 
     saveCart();
-
     renderCart();
 }
 
-
 function getCartDetails() {
 
-    const items = [];
+    return cart
+        .map(item => {
 
-    for (const item of cart) {
+            const product = findProduct(item.id);
 
-        const product = findProduct(item.id);
+            if (!product) return null;
 
-        if (!product) continue;
-
-        const quantity =
-            Math.min(
+            const quantity = Math.min(
                 99,
                 Math.max(1, Number(item.quantity))
             );
 
-        items.push({
-            product,
-            quantity,
-            lineTotal: product.price * quantity
-        });
-    }
-
-    return items;
+            return {
+                product,
+                quantity,
+                lineTotal: product.price * quantity
+            };
+        })
+        .filter(Boolean);
 }
-
 
 function getCartSubtotal() {
 
@@ -574,7 +602,6 @@ function getCartSubtotal() {
         0
     );
 }
-
 
 function getCartDiscount() {
 
@@ -588,26 +615,18 @@ function getCartDiscount() {
                     item.product.price
                 );
 
-            return total + discount * item.quantity;
+            return total +
+                discount * item.quantity;
+
         },
         0
     );
 }
 
-
-/*
- * GST is calculated on the selling-price subtotal.
- * The exact GST treatment can vary by product/category,
- * so the backend should remain authoritative for final
- * payment calculations.
- */
 function getCartGst() {
 
-    const subtotal = getCartSubtotal();
-
-    return subtotal * 0.18;
+    return getCartSubtotal() * 0.18;
 }
-
 
 function getCartTotal() {
 
@@ -624,156 +643,126 @@ function getCartTotal() {
 
 function renderCart() {
 
-    const cartItems = $("cartItems");
+    const container = $("cartItems");
+    const count = $("cartCount");
 
-    if (!cartItems) return;
+    const subtotalElement = $("cartSubtotal");
+    const discountElement = $("cartDiscount");
+    const gstElement = $("cartGst");
+    const totalElement = $("cartTotal");
 
     const details = getCartDetails();
 
-    const itemCount =
-        details.reduce(
-            (total, item) =>
-                total + item.quantity,
-            0
-        );
+    const totalQuantity = details.reduce(
+        (total, item) =>
+            total + item.quantity,
+        0
+    );
 
-    const subtotal = getCartSubtotal();
-    const discount = getCartDiscount();
-    const gst = getCartGst();
-    const total = getCartTotal();
-
-    if ($("cartCount")) {
-        $("cartCount").textContent =
-            String(itemCount);
+    if (count) {
+        count.textContent = totalQuantity;
     }
 
-    if ($("cartSubtotal")) {
-        $("cartSubtotal").textContent =
-            money(subtotal);
-    }
-
-    if ($("cartDiscount")) {
-        $("cartDiscount").textContent =
-            money(discount);
-    }
-
-    if ($("cartGst")) {
-        $("cartGst").textContent =
-            money(gst);
-    }
-
-    if ($("cartTotal")) {
-        $("cartTotal").textContent =
-            money(total);
-    }
-
-    if ($("checkoutTotal")) {
-        $("checkoutTotal").textContent =
-            money(total);
-    }
+    if (!container) return;
 
     if (details.length === 0) {
 
-        cartItems.innerHTML = `
+        container.innerHTML = `
             <div class="empty-cart">
                 <h3>Your cart is empty</h3>
-                <p>Add products to your cart to continue.</p>
+                <p>Add products to your cart.</p>
             </div>
         `;
 
-        return;
-    }
+    } else {
 
-    cartItems.innerHTML = details.map(item => {
+        container.innerHTML =
+            details.map(item => {
 
-        const product = item.product;
+                const product = item.product;
 
-        return `
-            <div class="cart-item">
+                return `
+                    <div class="cart-item">
 
-                <img
-                    src="${productImage(product)}"
-                    alt="${escapeHtml(product.name)}"
-                    class="cart-item-image"
-                >
-
-                <div class="cart-item-details">
-
-                    <h4>
-                        ${escapeHtml(product.name)}
-                    </h4>
-
-                    <p>
-                        ${money(product.price)}
-                    </p>
-
-                    <div class="quantity-controls">
-
-                        <button
-                            type="button"
-                            class="quantity-btn"
-                            data-cart-action="decrease"
-                            data-product-id="${product.id}"
+                        <img
+                            src="${productImage(product)}"
+                            alt="${escapeHtml(product.name)}"
                         >
-                            −
-                        </button>
 
-                        <span>
-                            ${item.quantity}
-                        </span>
+                        <div class="cart-item-info">
 
-                        <button
-                            type="button"
-                            class="quantity-btn"
-                            data-cart-action="increase"
-                            data-product-id="${product.id}"
-                        >
-                            +
-                        </button>
+                            <h4>
+                                ${escapeHtml(product.name)}
+                            </h4>
+
+                            <strong>
+                                ${money(product.price)}
+                            </strong>
+
+                            <div class="quantity-controls">
+
+                                <button
+                                    type="button"
+                                    data-cart-minus="${product.id}"
+                                >
+                                    −
+                                </button>
+
+                                <span>
+                                    ${item.quantity}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    data-cart-plus="${product.id}"
+                                >
+                                    +
+                                </button>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                class="remove-cart-btn"
+                                data-cart-remove="${product.id}"
+                            >
+                                Remove
+                            </button>
+
+                        </div>
 
                     </div>
+                `;
 
-                    <button
-                        type="button"
-                        class="remove-cart-btn"
-                        data-cart-action="remove"
-                        data-product-id="${product.id}"
-                    >
-                        Remove
-                    </button>
+            }).join("");
+    }
 
-                </div>
+    if (subtotalElement) {
+        subtotalElement.textContent =
+            money(getCartSubtotal());
+    }
 
-                <strong class="cart-item-total">
-                    ${money(item.lineTotal)}
-                </strong>
+    if (discountElement) {
+        discountElement.textContent =
+            money(getCartDiscount());
+    }
 
-            </div>
-        `;
+    if (gstElement) {
+        gstElement.textContent =
+            money(getCartGst());
+    }
 
-    }).join("");
-}
+    if (totalElement) {
+        totalElement.textContent =
+            money(getCartTotal());
+    }
 
+    const checkoutTotal = $("checkoutTotal");
 
-/* =========================================================
-   CART OPEN / CLOSE
-   ========================================================= */
-
-function openCart() {
-
-    $("cartDrawer")?.classList.add("open");
-    $("cartOverlay")?.classList.remove("hidden");
-
-    document.body.classList.add("cart-open");
-}
-
-
-function closeCart() {
-
-    $("cartDrawer")?.classList.remove("open");
-    $("cartOverlay")?.classList.add("hidden");
-
-    document.body.classList.remove("cart-open");
+    if (checkoutTotal) {
+        checkoutTotal.textContent =
+            money(getCartTotal());
+    }
 }
 
 
@@ -788,9 +777,7 @@ function openModal(id) {
     if (!modal) return;
 
     modal.classList.remove("hidden");
-    document.body.classList.add("modal-open");
 }
-
 
 function closeModal(id) {
 
@@ -799,227 +786,133 @@ function closeModal(id) {
     if (!modal) return;
 
     modal.classList.add("hidden");
-
-    const openModalCount =
-        document.querySelectorAll(
-            ".modal:not(.hidden)"
-        ).length;
-
-    if (openModalCount === 0) {
-        document.body.classList.remove("modal-open");
-    }
 }
 
 
 /* =========================================================
-   PRODUCT DETAILS
+   CART DRAWER
    ========================================================= */
 
-function showProductDetails(id) {
+function openCart() {
 
-    const product = findProduct(id);
+    $("cartDrawer")?.classList.add("open");
+    $("cartOverlay")?.classList.remove("hidden");
+}
 
-    if (!product) {
-        showMessage("Product not found.");
-        return;
-    }
+function closeCart() {
 
-    currentProduct = product;
-
-    const discount = product.oldPrice > product.price
-        ? Math.round(
-            ((product.oldPrice - product.price) /
-                product.oldPrice) * 100
-        )
-        : 0;
-
-    const container = $("productDetails");
-
-    if (!container) return;
-
-    container.innerHTML = `
-
-        <div class="product-detail">
-
-            <img
-                src="${productImage(product)}"
-                alt="${escapeHtml(product.name)}"
-                class="product-detail-image"
-            >
-
-            <div class="product-detail-info">
-
-                <div class="product-category">
-                    ${escapeHtml(product.category)}
-                </div>
-
-                <h2>
-                    ${escapeHtml(product.name)}
-                </h2>
-
-                <div class="product-price detail-price">
-
-                    <strong>
-                        ${money(product.price)}
-                    </strong>
-
-                    ${
-                        product.oldPrice
-                            ? `<del>${money(product.oldPrice)}</del>`
-                            : ""
-                    }
-
-                </div>
-
-                ${
-                    discount > 0
-                        ? `<p>${discount}% discount</p>`
-                        : ""
-                }
-
-                <p>
-                    This product is available from
-                    Blurancy Cartify.
-                </p>
-
-                <button
-                    type="button"
-                    class="primary-btn full-width"
-                    id="detailAddCartBtn"
-                >
-                    Add to Cart
-                </button>
-
-            </div>
-
-        </div>
-    `;
-
-    $("detailAddCartBtn")?.addEventListener(
-        "click",
-        () => {
-
-            addToCart(product.id);
-
-            closeModal("productModal");
-        }
-    );
-
-    openModal("productModal");
+    $("cartDrawer")?.classList.remove("open");
+    $("cartOverlay")?.classList.add("hidden");
 }
 
 
 /* =========================================================
-   LOGIN / LOGOUT
+   SEARCH
    ========================================================= */
 
-function showLoginModal() {
+function handleSearch(event) {
 
-    $("loginMessage").textContent = "";
+    event.preventDefault();
 
-    $("phoneLoginStep")?.classList.remove("hidden");
-    $("otpLoginStep")?.classList.add("hidden");
+    currentSearch =
+        $("searchInput")?.value.trim() || "";
 
-    openModal("loginModal");
+    renderProducts();
 }
 
 
-function showLoginMessage(message, error = false) {
+/* =========================================================
+   CATEGORY
+   ========================================================= */
 
-    const element = $("loginMessage");
+function selectCategory(category) {
 
-    if (!element) return;
+    selectedCategory = category;
 
-    element.textContent = message;
+    document
+        .querySelectorAll(".category-btn")
+        .forEach(button => {
 
-    element.classList.toggle(
-        "error",
-        Boolean(error)
-    );
+            button.classList.toggle(
+                "active",
+                button.dataset.category === category
+            );
+        });
+
+    renderProducts();
 }
 
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
 
 async function sendOtp() {
-
-    if (!supabaseClient) {
-
-        showLoginMessage(
-            "Supabase is not configured. Add your Supabase Project URL in app.js.",
-            true
-        );
-
-        return;
-    }
 
     const phone =
         $("phoneInput")?.value.trim();
 
+    const message =
+        $("loginMessage");
+
     if (!phone) {
 
-        showLoginMessage(
-            "Enter your phone number.",
-            true
-        );
+        if (message) {
+            message.textContent =
+                "Enter your phone number.";
+        }
 
         return;
     }
 
-    const button = $("sendOtpBtn");
+    if (!supabaseClient) {
 
-    if (button) {
-        button.disabled = true;
-        button.textContent = "Sending...";
+        if (message) {
+            message.textContent =
+                "Supabase is not configured yet.";
+        }
+
+        return;
     }
 
     try {
+
+        if (message) {
+            message.textContent =
+                "Sending OTP...";
+        }
 
         const { error } =
             await supabaseClient.auth.signInWithOtp({
                 phone
             });
 
-        if (error) {
-            throw error;
+        if (error) throw error;
+
+        $("phoneLoginStep")
+            ?.classList.add("hidden");
+
+        $("otpLoginStep")
+            ?.classList.remove("hidden");
+
+        if (message) {
+            message.textContent =
+                "OTP sent successfully.";
         }
-
-        $("phoneLoginStep")?.classList.add("hidden");
-        $("otpLoginStep")?.classList.remove("hidden");
-
-        showLoginMessage(
-            "OTP sent. Enter the OTP you received."
-        );
 
     } catch (error) {
 
         console.error(error);
 
-        showLoginMessage(
-            error?.message ||
-            "Unable to send OTP.",
-            true
-        );
-
-    } finally {
-
-        if (button) {
-            button.disabled = false;
-            button.textContent = "Send OTP";
+        if (message) {
+            message.textContent =
+                error.message ||
+                "Unable to send OTP.";
         }
     }
 }
 
-
 async function verifyOtp() {
-
-    if (!supabaseClient) {
-
-        showLoginMessage(
-            "Supabase is not configured.",
-            true
-        );
-
-        return;
-    }
 
     const phone =
         $("phoneInput")?.value.trim();
@@ -1027,153 +920,93 @@ async function verifyOtp() {
     const token =
         $("otpInput")?.value.trim();
 
+    const message =
+        $("loginMessage");
+
     if (!phone || !token) {
 
-        showLoginMessage(
-            "Enter the phone number and OTP.",
-            true
-        );
+        if (message) {
+            message.textContent =
+                "Enter your phone number and OTP.";
+        }
 
         return;
     }
 
-    const button = $("verifyOtpBtn");
+    if (!supabaseClient) {
 
-    if (button) {
-        button.disabled = true;
-        button.textContent = "Verifying...";
+        if (message) {
+            message.textContent =
+                "Supabase is not configured.";
+        }
+
+        return;
     }
 
     try {
 
-        const { data, error } =
+        if (message) {
+            message.textContent =
+                "Verifying OTP...";
+        }
+
+        const { error } =
             await supabaseClient.auth.verifyOtp({
                 phone,
                 token,
                 type: "sms"
             });
 
-        if (error) {
-            throw error;
-        }
-
-        if (!data?.session) {
-            throw new Error(
-                "Login session was not created."
-            );
-        }
+        if (error) throw error;
 
         closeModal("loginModal");
 
-        updateAuthUI(data.session.user);
+        updateAuthUI();
 
-        showMessage("Login successful.");
+        if (message) {
+            message.textContent =
+                "Login successful.";
+        }
 
     } catch (error) {
 
         console.error(error);
 
-        showLoginMessage(
-            error?.message ||
-            "Invalid or expired OTP.",
-            true
-        );
-
-    } finally {
-
-        if (button) {
-            button.disabled = false;
-            button.textContent = "Verify OTP";
+        if (message) {
+            message.textContent =
+                error.message ||
+                "Invalid OTP.";
         }
     }
 }
-
 
 async function logout() {
 
-    if (!supabaseClient) {
-        updateAuthUI(null);
-        return;
-    }
+    if (!supabaseClient) return;
 
     try {
 
-        const { error } =
-            await supabaseClient.auth.signOut();
+        await supabaseClient.auth.signOut();
 
-        if (error) {
-            throw error;
-        }
+        updateAuthUI();
 
-        updateAuthUI(null);
-
-        showMessage("You have been logged out.");
+        showMessage("Logged out.");
 
     } catch (error) {
 
         console.error(error);
-
-        showMessage(
-            error?.message ||
-            "Logout failed."
-        );
     }
 }
 
-
-function updateAuthUI(user) {
-
-    const loginBtn = $("loginBtn");
-    const logoutBtn = $("logoutBtn");
-    const userStatus = $("userStatus");
-
-    if (user) {
-
-        loginBtn?.classList.add("hidden");
-        logoutBtn?.classList.remove("hidden");
-        userStatus?.classList.remove("hidden");
-
-        if (userStatus) {
-
-            const phone =
-                user.phone ||
-                user.email ||
-                "Logged in";
-
-            userStatus.textContent =
-                `Logged in: ${phone}`;
-        }
-
-        const checkoutPhone =
-            $("checkoutPhone");
-
-        if (
-            checkoutPhone &&
-            user.phone &&
-            !checkoutPhone.value
-        ) {
-            checkoutPhone.value =
-                user.phone;
-        }
-
-    } else {
-
-        loginBtn?.classList.remove("hidden");
-        logoutBtn?.classList.add("hidden");
-        userStatus?.classList.add("hidden");
-
-        if (userStatus) {
-            userStatus.textContent = "";
-        }
-    }
-}
-
-
-async function loadCurrentUser() {
+async function updateAuthUI() {
 
     if (!supabaseClient) {
 
-        updateAuthUI(null);
+        $("loginBtn")
+            ?.classList.remove("hidden");
+
+        $("logoutBtn")
+            ?.classList.add("hidden");
 
         return;
     }
@@ -1181,36 +1014,47 @@ async function loadCurrentUser() {
     try {
 
         const {
-            data,
-            error
+            data: { session }
         } = await supabaseClient.auth.getSession();
 
-        if (error) {
-            throw error;
-        }
+        const loggedIn = Boolean(session);
 
-        updateAuthUI(
-            data?.session?.user || null
-        );
+        $("loginBtn")
+            ?.classList.toggle(
+                "hidden",
+                loggedIn
+            );
+
+        $("logoutBtn")
+            ?.classList.toggle(
+                "hidden",
+                !loggedIn
+            );
+
+        const status = $("userStatus");
+
+        if (status) {
+
+            if (loggedIn) {
+
+                status.textContent =
+                    "You are logged in.";
+
+                status.classList.remove("hidden");
+
+            } else {
+
+                status.classList.add("hidden");
+            }
+        }
 
     } catch (error) {
 
         console.error(
-            "Session error:",
+            "Auth UI error:",
             error
         );
-
-        updateAuthUI(null);
     }
-
-    supabaseClient.auth.onAuthStateChange(
-        (_event, session) => {
-
-            updateAuthUI(
-                session?.user || null
-            );
-        }
-    );
 }
 
 
@@ -1218,350 +1062,235 @@ async function loadCurrentUser() {
    CHECKOUT
    ========================================================= */
 
-function getCheckoutData() {
+function openCheckout() {
 
-    return {
-        name: $("checkoutName")?.value.trim() || "",
-        email: $("checkoutEmail")?.value.trim() || "",
-        phone: $("checkoutPhone")?.value.trim() || "",
-        address: $("checkoutAddress")?.value.trim() || "",
-        pincode: $("checkoutPincode")?.value.trim() || ""
-    };
+    if (cart.length === 0) {
+
+        showMessage(
+            "Your cart is empty."
+        );
+
+        return;
+    }
+
+    renderCart();
+
+    openModal("checkoutModal");
 }
 
-
-function validateCheckout(data) {
-
-    if (!data.name) {
-        return "Enter your full name.";
-    }
-
-    if (
-        !data.email ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)
-    ) {
-        return "Enter a valid email address.";
-    }
-
-    if (
-        !data.phone ||
-        data.phone.replace(/\D/g, "").length < 10
-    ) {
-        return "Enter a valid phone number.";
-    }
-
-    if (!data.address) {
-        return "Enter your delivery address.";
-    }
-
-    if (!/^\d{6}$/.test(data.pincode)) {
-        return "Enter a valid 6-digit PIN code.";
-    }
-
-    if (getCartDetails().length === 0) {
-        return "Your cart is empty.";
-    }
-
-    return "";
-}
-
-
-async function startPayUCheckout(event) {
+async function handleCheckout(event) {
 
     event.preventDefault();
 
-    const message = $("checkoutMessage");
-    const button = $("payNowBtn");
+    const message =
+        $("checkoutMessage");
 
-    if (message) {
-        message.textContent = "";
-        message.classList.remove("error");
-    }
+    const details =
+        getCartDetails();
 
-    const data = getCheckoutData();
-
-    const validationError =
-        validateCheckout(data);
-
-    if (validationError) {
+    if (details.length === 0) {
 
         if (message) {
             message.textContent =
-                validationError;
-
-            message.classList.add("error");
+                "Your cart is empty.";
         }
 
         return;
     }
 
+    const name =
+        $("checkoutName")?.value.trim();
+
+    const email =
+        $("checkoutEmail")?.value.trim();
+
+    const phone =
+        $("checkoutPhone")?.value.trim();
+
+    const address =
+        $("checkoutAddress")?.value.trim();
+
+    const pincode =
+        $("checkoutPincode")?.value.trim();
+
     if (
-        !API_BASE_URL ||
-        API_BASE_URL ===
-        "YOUR_BACKEND_URL"
+        !name ||
+        !email ||
+        !phone ||
+        !address ||
+        !/^\d{6}$/.test(pincode)
     ) {
 
         if (message) {
-
             message.textContent =
-                "Payment backend is not configured yet. Add your deployed backend URL in assets/app.js.";
-
-            message.classList.add("error");
+                "Please enter valid delivery details.";
         }
 
         return;
     }
 
-    if (button) {
-        button.disabled = true;
-        button.textContent = "Creating payment...";
+    /*
+     * IMPORTANT:
+     * Real PayU payment must be created by your
+     * secure backend.
+     *
+     * Never place the PayU Salt in this file.
+     */
+
+    if (
+        !API_BASE_URL ||
+        API_BASE_URL === "YOUR_BACKEND_URL"
+    ) {
+
+        if (message) {
+            message.textContent =
+                "Payment backend is not connected yet.";
+        }
+
+        return;
     }
 
     try {
 
-        /*
-         * Only product IDs and quantities are sent.
-         *
-         * The backend must calculate the authoritative
-         * amount using its own product database.
-         */
-        const items = getCartDetails().map(item => ({
-            productId: item.product.id,
-            quantity: item.quantity
-        }));
+        if (message) {
+            message.textContent =
+                "Creating secure payment...";
+        }
 
-        const response = await fetch(
-            `${API_BASE_URL.replace(/\/$/, "")}/api/payu/create-payment`,
-            {
-                method: "POST",
+        const response =
+            await fetch(
+                `${API_BASE_URL}/api/create-payment`,
+                {
+                    method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                body: JSON.stringify({
-                    customer: data,
-                    items
-                })
-            }
-        );
+                    body: JSON.stringify({
+                        customer: {
+                            name,
+                            email,
+                            phone,
+                            address,
+                            pincode
+                        },
 
-        const result =
-            await response.json();
+                        items: details.map(item => ({
+                            id: item.product.id,
+                            name: item.product.name,
+                            quantity: item.quantity
+                        }))
+                    })
+                }
+            );
 
         if (!response.ok) {
-
             throw new Error(
-                result?.error ||
-                "Unable to create payment."
+                "Payment server returned an error."
             );
         }
 
-        if (
-            !result.formAction ||
-            !result.fields
-        ) {
+        const data =
+            await response.json();
 
-            throw new Error(
-                "Invalid payment response from server."
-            );
+        if (data.redirectUrl) {
+
+            window.location.href =
+                data.redirectUrl;
+
+            return;
         }
 
-        submitPayUForm(
-            result.formAction,
-            result.fields
-        );
+        if (message) {
+            message.textContent =
+                "Payment session was not created.";
+        }
 
     } catch (error) {
 
         console.error(
-            "PayU checkout error:",
+            "Checkout error:",
             error
         );
 
         if (message) {
-
             message.textContent =
-                error?.message ||
-                "Payment could not be started.";
-
-            message.classList.add("error");
-        }
-
-    } finally {
-
-        if (button) {
-            button.disabled = false;
-            button.textContent =
-                "Continue to PayU";
+                error.message ||
+                "Unable to start payment.";
         }
     }
 }
 
 
-function submitPayUForm(
-    formAction,
-    fields
-) {
-
-    const form =
-        document.createElement("form");
-
-    form.method = "POST";
-    form.action = formAction;
-    form.style.display = "none";
-
-    Object.entries(fields).forEach(
-        ([name, value]) => {
-
-            const input =
-                document.createElement("input");
-
-            input.type = "hidden";
-            input.name = name;
-            input.value =
-                value == null
-                    ? ""
-                    : String(value);
-
-            form.appendChild(input);
-        }
-    );
-
-    document.body.appendChild(form);
-
-    form.submit();
-}
-
-
 /* =========================================================
-   INFO CONTENT
+   INFORMATION
    ========================================================= */
 
-const infoPages = {
-
-    about: `
-        <h2>About Blurancy Cartify</h2>
-        <p>
-            Blurancy Cartify is an online shopping platform
-            designed for convenient product discovery,
-            cart management and online checkout.
-        </p>
-    `,
-
-    contact: `
-        <h2>Contact Us</h2>
-        <p>
-            Please use the official contact details
-            published by Blurancy Cartify for customer
-            support and order assistance.
-        </p>
-    `,
-
-    privacy: `
-        <h2>Privacy Policy</h2>
-        <p>
-            Customer information should be collected,
-            processed and protected according to the
-            applicable privacy laws and the published
-            Blurancy Cartify privacy policy.
-        </p>
-    `,
-
-    terms: `
-        <h2>Terms & Conditions</h2>
-        <p>
-            Orders, payments, cancellations, returns and
-            other services are subject to the applicable
-            Blurancy Cartify terms and conditions.
-        </p>
-    `,
-
-    refund: `
-        <h2>Refund & Return Policy</h2>
-        <p>
-            Refunds and returns are subject to the
-            applicable product and order conditions.
-            The final production website should publish
-            the complete approved refund policy.
-        </p>
-    `,
-
-    shipping: `
-        <h2>Shipping Policy</h2>
-        <p>
-            Shipping availability, delivery times and
-            charges depend on the order and delivery
-            location. The production website should
-            publish the complete shipping policy.
-        </p>
-    `
-};
-
-
-function showInfoPage(type) {
+function showInfo(type) {
 
     const content =
-        infoPages[type];
+        $("infoContent");
 
     if (!content) return;
 
-    $("infoContent").innerHTML =
-        content;
+    const information = {
+
+        about: `
+            <h2>About Blurancy Cartify</h2>
+            <p>
+                Blurancy Cartify is an online shopping platform
+                offering products across multiple categories.
+            </p>
+        `,
+
+        contact: `
+            <h2>Contact</h2>
+            <p>
+                Please add your official customer-support
+                contact information before publishing.
+            </p>
+        `,
+
+        privacy: `
+            <h2>Privacy Policy</h2>
+            <p>
+                Customer information should be collected,
+                stored and processed securely.
+            </p>
+        `,
+
+        terms: `
+            <h2>Terms & Conditions</h2>
+            <p>
+                Orders, payments, delivery and cancellations
+                are subject to the applicable terms.
+            </p>
+        `,
+
+        refund: `
+            <h2>Refund & Return</h2>
+            <p>
+                Refund and return eligibility depends on the
+                product and the applicable return policy.
+            </p>
+        `,
+
+        shipping: `
+            <h2>Shipping Policy</h2>
+            <p>
+                Shipping times and charges depend on the
+                delivery location and product.
+            </p>
+        `
+    };
+
+    content.innerHTML =
+        information[type] ||
+        "<p>Information unavailable.</p>";
 
     openModal("infoModal");
-}
-
-
-/* =========================================================
-   MESSAGE
-   ========================================================= */
-
-function showMessage(message) {
-
-    /*
-     * Simple temporary notification.
-     * Does not interfere with cart or login.
-     */
-
-    let notification =
-        document.getElementById(
-            "cartifyNotification"
-        );
-
-    if (!notification) {
-
-        notification =
-            document.createElement("div");
-
-        notification.id =
-            "cartifyNotification";
-
-        notification.className =
-            "cartify-notification";
-
-        document.body.appendChild(
-            notification
-        );
-    }
-
-    notification.textContent =
-        message;
-
-    notification.classList.add("show");
-
-    clearTimeout(
-        notification._timer
-    );
-
-    notification._timer =
-        setTimeout(() => {
-
-            notification.classList.remove(
-                "show"
-            );
-
-        }, 2500);
 }
 
 
@@ -1569,364 +1298,316 @@ function showMessage(message) {
    EVENT LISTENERS
    ========================================================= */
 
-function setupEvents() {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    /* Search */
+        /* Products */
 
-    $("searchForm")?.addEventListener(
-        "submit",
-        event => {
+        renderProducts();
 
-            event.preventDefault();
+        /* Cart */
 
-            currentSearch =
-                $("searchInput")?.value.trim() ||
-                "";
+        renderCart();
 
-            renderProducts();
+        /* Year */
+
+        const year =
+            $("currentYear");
+
+        if (year) {
+            year.textContent =
+                new Date().getFullYear();
         }
-    );
 
+        /* Search */
 
-    /* Categories */
+        $("searchForm")
+            ?.addEventListener(
+                "submit",
+                handleSearch
+            );
 
-    document
-        .querySelectorAll(".category-btn")
-        .forEach(button => {
+        /* Sort */
 
-            button.addEventListener(
-                "click",
-                () => {
+        $("sortSelect")
+            ?.addEventListener(
+                "change",
+                event => {
 
-                    document
-                        .querySelectorAll(
-                            ".category-btn"
-                        )
-                        .forEach(btn =>
-                            btn.classList.remove(
-                                "active"
-                            )
-                        );
-
-                    button.classList.add(
-                        "active"
-                    );
-
-                    selectedCategory =
-                        button.dataset.category ||
-                        "All";
+                    currentSort =
+                        event.target.value;
 
                     renderProducts();
                 }
             );
-        });
 
+        /* Categories */
 
-    /* Sorting */
+        document
+            .querySelectorAll(".category-btn")
+            .forEach(button => {
 
-    $("sortSelect")?.addEventListener(
-        "change",
-        event => {
+                button.addEventListener(
+                    "click",
+                    () => {
 
-            currentSort =
-                event.target.value;
-
-            renderProducts();
-        }
-    );
-
-
-    /* Product buttons */
-
-    $("productGrid")?.addEventListener(
-        "click",
-        event => {
-
-            const button =
-                event.target.closest("button");
-
-            if (!button) return;
-
-            const id =
-                Number(
-                    button.dataset.productId
+                        selectCategory(
+                            button.dataset.category
+                        );
+                    }
                 );
-
-            if (!id) return;
-
-            if (
-                button.classList.contains(
-                    "add-cart-btn"
-                )
-            ) {
-                addToCart(id);
-            }
-
-            if (
-                button.classList.contains(
-                    "view-product-btn"
-                )
-            ) {
-                showProductDetails(id);
-            }
-        }
-    );
-
-
-    /* Cart */
-
-    $("cartBtn")?.addEventListener(
-        "click",
-        openCart
-    );
-
-    $("closeCartBtn")?.addEventListener(
-        "click",
-        closeCart
-    );
-
-    $("cartOverlay")?.addEventListener(
-        "click",
-        closeCart
-    );
-
-
-    /* Cart item buttons */
-
-    $("cartItems")?.addEventListener(
-        "click",
-        event => {
-
-            const button =
-                event.target.closest("button");
-
-            if (!button) return;
-
-            const id =
-                Number(
-                    button.dataset.productId
-                );
-
-            const action =
-                button.dataset.cartAction;
-
-            if (!id || !action) return;
-
-            if (action === "increase") {
-                changeQuantity(id, 1);
-            }
-
-            if (action === "decrease") {
-                changeQuantity(id, -1);
-            }
-
-            if (action === "remove") {
-                removeFromCart(id);
-            }
-        }
-    );
-
-
-    /* Login */
-
-    $("loginBtn")?.addEventListener(
-        "click",
-        showLoginModal
-    );
-
-    $("logoutBtn")?.addEventListener(
-        "click",
-        logout
-    );
-
-    $("sendOtpBtn")?.addEventListener(
-        "click",
-        sendOtp
-    );
-
-    $("verifyOtpBtn")?.addEventListener(
-        "click",
-        verifyOtp
-    );
-
-
-    $("backToPhoneBtn")?.addEventListener(
-        "click",
-        () => {
-
-            $("otpLoginStep")
-                ?.classList.add("hidden");
-
-            $("phoneLoginStep")
-                ?.classList.remove("hidden");
-
-            showLoginMessage("");
-        }
-    );
-
-
-    /* Checkout */
-
-    $("checkoutBtn")?.addEventListener(
-        "click",
-        () => {
-
-            if (
-                getCartDetails().length === 0
-            ) {
-
-                showMessage(
-                    "Your cart is empty."
-                );
-
-                return;
-            }
-
-            renderCart();
-
-            closeCart();
-
-            openModal(
-                "checkoutModal"
-            );
-        }
-    );
-
-
-    $("checkoutForm")?.addEventListener(
-        "submit",
-        startPayUCheckout
-    );
-
-
-    /* Shop Now */
-
-    $("shopNowBtn")?.addEventListener(
-        "click",
-        () => {
-
-            document
-                .querySelector(
-                    ".products-section"
-                )
-                ?.scrollIntoView({
-                    behavior: "smooth"
-                });
-        }
-    );
-
-
-    /* Home */
-
-    $("homeBtn")?.addEventListener(
-        "click",
-        event => {
-
-            event.preventDefault();
-
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
             });
-        }
-    );
 
+        /* Product buttons */
 
-    /* Modal close buttons */
+        $("productGrid")
+            ?.addEventListener(
+                "click",
+                event => {
 
-    document
-        .querySelectorAll("[data-close]")
-        .forEach(element => {
+                    const addButton =
+                        event.target.closest(
+                            ".add-cart-btn"
+                        );
 
-            element.addEventListener(
+                    const viewButton =
+                        event.target.closest(
+                            ".view-product-btn"
+                        );
+
+                    if (addButton) {
+
+                        addToCart(
+                            addButton.dataset.productId
+                        );
+
+                        return;
+                    }
+
+                    if (viewButton) {
+
+                        openProductDetails(
+                            viewButton.dataset.productId
+                        );
+                    }
+                }
+            );
+
+        /* Cart buttons */
+
+        $("cartItems")
+            ?.addEventListener(
+                "click",
+                event => {
+
+                    const plus =
+                        event.target.closest(
+                            "[data-cart-plus]"
+                        );
+
+                    const minus =
+                        event.target.closest(
+                            "[data-cart-minus]"
+                        );
+
+                    const remove =
+                        event.target.closest(
+                            "[data-cart-remove]"
+                        );
+
+                    if (plus) {
+
+                        changeQuantity(
+                            plus.dataset.cartPlus,
+                            1
+                        );
+                    }
+
+                    if (minus) {
+
+                        changeQuantity(
+                            minus.dataset.cartMinus,
+                            -1
+                        );
+                    }
+
+                    if (remove) {
+
+                        removeFromCart(
+                            remove.dataset.cartRemove
+                        );
+                    }
+                }
+            );
+
+        /* Cart */
+
+        $("cartBtn")
+            ?.addEventListener(
+                "click",
+                openCart
+            );
+
+        $("closeCartBtn")
+            ?.addEventListener(
+                "click",
+                closeCart
+            );
+
+        $("cartOverlay")
+            ?.addEventListener(
+                "click",
+                closeCart
+            );
+
+        /* Checkout */
+
+        $("checkoutBtn")
+            ?.addEventListener(
+                "click",
+                openCheckout
+            );
+
+        $("checkoutForm")
+            ?.addEventListener(
+                "submit",
+                handleCheckout
+            );
+
+        /* Login */
+
+        $("loginBtn")
+            ?.addEventListener(
                 "click",
                 () => {
 
-                    closeModal(
-                        element.dataset.close
+                    openModal(
+                        "loginModal"
                     );
                 }
             );
-        });
 
+        $("logoutBtn")
+            ?.addEventListener(
+                "click",
+                logout
+            );
 
-    /* Footer information */
+        $("sendOtpBtn")
+            ?.addEventListener(
+                "click",
+                sendOtp
+            );
 
-    document
-        .querySelectorAll("[data-info]")
-        .forEach(button => {
+        $("verifyOtpBtn")
+            ?.addEventListener(
+                "click",
+                verifyOtp
+            );
 
-            button.addEventListener(
+        $("backToPhoneBtn")
+            ?.addEventListener(
                 "click",
                 () => {
 
-                    showInfoPage(
-                        button.dataset.info
-                    );
+                    $("otpLoginStep")
+                        ?.classList.add(
+                            "hidden"
+                        );
+
+                    $("phoneLoginStep")
+                        ?.classList.remove(
+                            "hidden"
+                        );
+
+                    $("loginMessage")
+                        && (
+                            $("loginMessage")
+                                .textContent = ""
+                        );
                 }
             );
-        });
 
+        /* Shop Now */
 
-    /* Escape key */
+        $("shopNowBtn")
+            ?.addEventListener(
+                "click",
+                () => {
 
-    document.addEventListener(
-        "keydown",
-        event => {
+                    $("productGrid")
+                        ?.scrollIntoView({
+                            behavior: "smooth"
+                        });
+                }
+            );
 
-            if (event.key !== "Escape") {
-                return;
-            }
+        /* Home */
 
-            closeCart();
+        $("homeBtn")
+            ?.addEventListener(
+                "click",
+                event => {
 
-            document
-                .querySelectorAll(
-                    ".modal:not(.hidden)"
-                )
-                .forEach(modal => {
-                    closeModal(modal.id);
-                });
+                    event.preventDefault();
+
+                    window.scrollTo({
+                        top: 0,
+                        behavior: "smooth"
+                    });
+                }
+            );
+
+        /* Information */
+
+        document
+            .querySelectorAll(".footer-link")
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        showInfo(
+                            button.dataset.info
+                        );
+                    }
+                );
+            });
+
+        /* Close modal buttons */
+
+        document
+            .querySelectorAll(
+                "[data-close]"
+            )
+            .forEach(element => {
+
+                element.addEventListener(
+                    "click",
+                    () => {
+
+                        closeModal(
+                            element.dataset.close
+                        );
+                    }
+                );
+            });
+
+        /* Authentication state */
+
+        updateAuthUI();
+
+        if (supabaseClient) {
+
+            supabaseClient.auth.onAuthStateChange(
+                () => {
+                    updateAuthUI();
+                }
+            );
         }
-    );
-}
 
-
-/* =========================================================
-   INITIALIZATION
-   ========================================================= */
-
-function initializeApp() {
-
-    renderProducts();
-
-    renderCart();
-
-    setupEvents();
-
-    loadCurrentUser();
-
-    if ($("currentYear")) {
-        $("currentYear").textContent =
-            new Date().getFullYear();
     }
-
-    console.log(
-        `Blurancy Cartify loaded: ${products.length} products`
-    );
-}
-
-
-if (
-    document.readyState === "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeApp
-    );
-
-} else {
-
-    initializeApp();
-}                                                                                                                                           
+);
+```
