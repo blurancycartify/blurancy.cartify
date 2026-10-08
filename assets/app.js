@@ -1,3 +1,7 @@
+https://avfrwtvbbytyyoxoubjd.supabase.co/rest/v1/
+
+sb_publishable_XW68RVEL3u7sRrHiZ0PoFQ_gTmfvncj
+
 ```javascript
 /*
   Blurancy Cartify
