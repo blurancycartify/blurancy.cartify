@@ -1,585 +1,637 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Blurancy Cartify - Online Shopping">
+  <title>Blurancy Cartify</title>
 
-    <title>Blurancy Cartify</title>
-    <meta name="description" content="Blurancy Cartify - Online Shopping">
-    <meta name="theme-color" content="#111827">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <link rel="stylesheet" href="assets/style.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6f8;
+      color: #222;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    header {
+      background: #2874f0;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: auto;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .search {
+      flex: 1;
+      display: flex;
+      background: white;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .search input {
+      flex: 1;
+      border: 0;
+      outline: 0;
+      padding: 12px;
+      color: #222;
+    }
+
+    .search button {
+      border: 0;
+      background: white;
+      padding: 0 16px;
+      font-weight: bold;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-actions button {
+      border: 0;
+      background: white;
+      color: #2874f0;
+      border-radius: 4px;
+      padding: 9px 12px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px 16px;
+    }
+
+    .hero {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin-bottom: 8px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar select,
+    .toolbar input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: white;
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .product {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 5px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product img {
+      width: 100%;
+      height: 210px;
+      object-fit: cover;
+      background: #eee;
+    }
+
+    .product-body {
+      padding: 14px;
+      flex: 1;
+    }
+
+    .product-category {
+      color: #777;
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .product-name {
+      font-weight: bold;
+      margin-bottom: 8px;
+      min-height: 38px;
+    }
+
+    .price {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .mrp {
+      color: #888;
+      text-decoration: line-through;
+      margin-left: 5px;
+      font-size: 13px;
+    }
+
+    .stock {
+      font-size: 12px;
+      margin-top: 7px;
+    }
+
+    .product-actions {
+      padding: 12px;
+      display: flex;
+      gap: 7px;
+    }
+
+    .add-btn,
+    .buy-btn {
+      flex: 1;
+      border: 0;
+      border-radius: 5px;
+      padding: 10px;
+      font-weight: bold;
+    }
+
+    .add-btn {
+      background: #ff9f00;
+      color: white;
+    }
+
+    .buy-btn {
+      background: #2874f0;
+      color: white;
+    }
+
+    .empty {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 15px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .close {
+      border: 0;
+      background: transparent;
+      font-size: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    .primary {
+      width: 100%;
+      border: 0;
+      padding: 12px;
+      background: #2874f0;
+      color: white;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .cart-item img {
+      width: 75px;
+      height: 75px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .cart-info {
+      flex: 1;
+    }
+
+    .quantity {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .quantity button {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #ccc;
+      background: white;
+      border-radius: 4px;
+    }
+
+    .remove {
+      border: 0;
+      background: transparent;
+      color: #d00;
+      margin-top: 5px;
+    }
+
+    .summary {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #ddd;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+    }
+
+    .total {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .order {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      margin-bottom: 10px;
+    }
+
+    .status {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      background: #eee;
+      font-size: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 25px;
+      transform: translateX(-50%);
+      background: #222;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 5px;
+      display: none;
+      z-index: 5000;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .products {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 650px) {
+      .header-inner {
+        flex-wrap: wrap;
+      }
+
+      .logo {
+        width: 100%;
+      }
+
+      .search {
+        order: 3;
+        width: 100%;
+        flex-basis: 100%;
+      }
+
+      .products {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .product img {
+        height: 160px;
+      }
+
+      .product-actions {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .products {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-    <!-- HEADER -->
-    <header class="site-header">
-        <div class="header-container">
+<header>
+  <div class="header-inner">
+    <div class="logo">Blurancy Cartify</div>
 
-            <a href="#" class="brand" id="homeBtn">
-                <span class="brand-icon">🛒</span>
-                <span>Blurancy Cartify</span>
-            </a>
+    <form class="search" id="searchForm">
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Search products..."
+        autocomplete="off"
+      >
+      <button type="submit">Search</button>
+    </form>
 
-            <form id="searchForm" class="search-box">
-                <input
-                    type="search"
-                    id="searchInput"
-                    placeholder="Search products..."
-                    autocomplete="off"
-                >
-                <button type="submit">Search</button>
-            </form>
+    <div class="nav-actions">
+      <button id="accountBtn">Account</button>
+      <button id="ordersBtn">Orders</button>
+      <button id="cartBtn">Cart (<span id="cartCount">0</span>)</button>
+    </div>
+  </div>
+</header>
 
-            <div class="header-actions">
+<main class="container">
 
-                <button id="loginBtn" class="header-btn" type="button">
-                    Login
-                </button>
+  <section class="hero">
+    <h1>Welcome to Blurancy Cartify</h1>
+    <p>Shop products online with a simple and secure checkout.</p>
+  </section>
 
-                <button id="logoutBtn" class="header-btn hidden" type="button">
-                    Logout
-                </button>
+  <div class="toolbar">
+    <select id="categoryFilter">
+      <option value="">All categories</option>
+    </select>
 
-                <button id="cartBtn" class="cart-btn" type="button">
-                    🛒 Cart
-                    <span id="cartCount">0</span>
-                </button>
+    <input
+      id="minPrice"
+      type="number"
+      min="0"
+      placeholder="Min price"
+    >
 
-            </div>
-        </div>
+    <input
+      id="maxPrice"
+      type="number"
+      min="0"
+      placeholder="Max price"
+    >
 
-        <!-- USER STATUS -->
-        <div id="userStatus" class="user-status hidden"></div>
-    </header>
+    <button class="primary" id="filterBtn" style="width:auto;padding:10px 20px">
+      Filter
+    </button>
+  </div>
 
+  <section id="products" class="products">
+    <div class="empty">Loading products...</div>
+  </section>
 
-    <!-- CATEGORY BAR -->
-    <nav class="category-bar">
-        <div class="category-container">
+</main>
 
-            <button class="category-btn active" data-category="All">
-                All
-            </button>
-
-            <button class="category-btn" data-category="Electronics">
-                Electronics
-            </button>
-
-            <button class="category-btn" data-category="Computers">
-                Computers
-            </button>
-
-            <button class="category-btn" data-category="Fashion">
-                Fashion
-            </button>
-
-            <button class="category-btn" data-category="Footwear">
-                Footwear
-            </button>
-
-            <button class="category-btn" data-category="Home">
-                Home
-            </button>
-
-            <button class="category-btn" data-category="Beauty">
-                Beauty
-            </button>
-
-            <button class="category-btn" data-category="Grocery">
-                Grocery
-            </button>
-
-            <button class="category-btn" data-category="Fitness">
-                Fitness
-            </button>
-
-            <button class="category-btn" data-category="Books">
-                Books
-            </button>
-
-            <button class="category-btn" data-category="Gaming">
-                Gaming
-            </button>
-
-            <button class="category-btn" data-category="Toys">
-                Toys
-            </button>
-
-            <button class="category-btn" data-category="Bags">
-                Bags
-            </button>
-
-            <button class="category-btn" data-category="Travel">
-                Travel
-            </button>
-
-        </div>
-    </nav>
-
-
-    <!-- HERO -->
-    <main>
-
-        <section class="hero">
-            <div class="hero-content">
-
-                <h1>Welcome to Blurancy Cartify</h1>
-
-                <p>
-                    Shop electronics, fashion, home products and more.
-                </p>
-
-                <button id="shopNowBtn" class="primary-btn" type="button">
-                    Shop Now
-                </button>
-
-            </div>
-        </section>
-
-
-        <!-- PRODUCTS -->
-        <section class="products-section">
-
-            <div class="section-heading">
-                <div>
-                    <h2>Products</h2>
-                    <p id="productResultText">
-                        Browse our products
-                    </p>
-                </div>
-
-                <select id="sortSelect" class="sort-select">
-                    <option value="default">Sort</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="name">Name: A-Z</option>
-                </select>
-            </div>
-
-            <div id="productGrid" class="product-grid">
-                <!-- Products are loaded by assets/app.js -->
-            </div>
-
-            <div id="noProducts" class="no-products hidden">
-                <h3>No products found</h3>
-                <p>Try another search or category.</p>
-            </div>
-
-        </section>
-
-    </main>
-
-
-    <!-- LOGIN MODAL -->
-    <div id="loginModal" class="modal hidden">
-
-        <div class="modal-overlay" data-close="loginModal"></div>
-
-        <div class="modal-content">
-
-            <button
-                class="modal-close"
-                type="button"
-                data-close="loginModal"
-                aria-label="Close"
-            >
-                ×
-            </button>
-
-            <h2>Login</h2>
-
-            <p class="modal-subtitle">
-                Login securely using your phone number.
-            </p>
-
-            <!-- PHONE STEP -->
-            <div id="phoneLoginStep">
-
-                <label for="phoneInput">
-                    Phone Number
-                </label>
-
-                <input
-                    type="tel"
-                    id="phoneInput"
-                    placeholder="+91XXXXXXXXXX"
-                    autocomplete="tel"
-                    maxlength="16"
-                >
-
-                <button
-                    id="sendOtpBtn"
-                    class="primary-btn full-width"
-                    type="button"
-                >
-                    Send OTP
-                </button>
-
-            </div>
-
-
-            <!-- OTP STEP -->
-            <div id="otpLoginStep" class="hidden">
-
-                <label for="otpInput">
-                    Enter OTP
-                </label>
-
-                <input
-                    type="text"
-                    id="otpInput"
-                    placeholder="Enter OTP"
-                    inputmode="numeric"
-                    autocomplete="one-time-code"
-                    maxlength="6"
-                >
-
-                <button
-                    id="verifyOtpBtn"
-                    class="primary-btn full-width"
-                    type="button"
-                >
-                    Verify OTP
-                </button>
-
-                <button
-                    id="backToPhoneBtn"
-                    class="secondary-btn full-width"
-                    type="button"
-                >
-                    Change Number
-                </button>
-
-            </div>
-
-            <p id="loginMessage" class="form-message"></p>
-
-        </div>
+<!-- ACCOUNT -->
+<div class="modal" id="accountModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Customer Account</h2>
+      <button class="close" data-close="accountModal">&times;</button>
     </div>
 
+    <div id="loggedOutView">
+      <div class="form-group">
+        <label>Phone number</label>
+        <input
+          id="phoneInput"
+          type="tel"
+          maxlength="10"
+          placeholder="10-digit mobile number"
+        >
+      </div>
 
-    <!-- CART DRAWER -->
-    <aside id="cartDrawer" class="cart-drawer">
+      <button class="primary" id="sendOtpBtn">Send OTP</button>
 
-        <div class="cart-header">
-
-            <h2>Your Cart</h2>
-
-            <button
-                id="closeCartBtn"
-                class="modal-close"
-                type="button"
-                aria-label="Close cart"
-            >
-                ×
-            </button>
-
+      <div id="otpArea" class="hidden" style="margin-top:15px">
+        <div class="form-group">
+          <label>OTP</label>
+          <input
+            id="otpInput"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Enter OTP"
+          >
         </div>
 
-        <div id="cartItems" class="cart-items">
-            <!-- Cart items loaded by app.js -->
-        </div>
-
-        <div class="cart-footer">
-
-            <div class="cart-summary-row">
-                <span>Subtotal</span>
-                <strong id="cartSubtotal">₹0.00</strong>
-            </div>
-
-            <div class="cart-summary-row">
-                <span>Discount</span>
-                <strong id="cartDiscount">₹0.00</strong>
-            </div>
-
-            <div class="cart-summary-row">
-                <span>GST</span>
-                <strong id="cartGst">₹0.00</strong>
-            </div>
-
-            <div class="cart-summary-row total-row">
-                <span>Total</span>
-                <strong id="cartTotal">₹0.00</strong>
-            </div>
-
-            <button
-                id="checkoutBtn"
-                class="primary-btn full-width"
-                type="button"
-            >
-                Proceed to Checkout
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <!-- CART OVERLAY -->
-    <div id="cartOverlay" class="cart-overlay hidden"></div>
-
-
-    <!-- CHECKOUT MODAL -->
-    <div id="checkoutModal" class="modal hidden">
-
-        <div class="modal-overlay" data-close="checkoutModal"></div>
-
-        <div class="modal-content checkout-content">
-
-            <button
-                class="modal-close"
-                type="button"
-                data-close="checkoutModal"
-                aria-label="Close"
-            >
-                ×
-            </button>
-
-            <h2>Checkout</h2>
-
-            <p class="modal-subtitle">
-                Enter your details before continuing to payment.
-            </p>
-
-            <form id="checkoutForm">
-
-                <label for="checkoutName">
-                    Full Name
-                </label>
-
-                <input
-                    type="text"
-                    id="checkoutName"
-                    name="name"
-                    placeholder="Your full name"
-                    autocomplete="name"
-                    required
-                >
-
-
-                <label for="checkoutEmail">
-                    Email
-                </label>
-
-                <input
-                    type="email"
-                    id="checkoutEmail"
-                    name="email"
-                    placeholder="you@example.com"
-                    autocomplete="email"
-                    required
-                >
-
-
-                <label for="checkoutPhone">
-                    Phone
-                </label>
-
-                <input
-                    type="tel"
-                    id="checkoutPhone"
-                    name="phone"
-                    placeholder="+91XXXXXXXXXX"
-                    autocomplete="tel"
-                    required
-                >
-
-
-                <label for="checkoutAddress">
-                    Delivery Address
-                </label>
-
-                <textarea
-                    id="checkoutAddress"
-                    name="address"
-                    placeholder="Enter your complete delivery address"
-                    rows="4"
-                    required
-                ></textarea>
-
-
-                <label for="checkoutPincode">
-                    PIN Code
-                </label>
-
-                <input
-                    type="text"
-                    id="checkoutPincode"
-                    name="pincode"
-                    placeholder="6-digit PIN code"
-                    inputmode="numeric"
-                    maxlength="6"
-                    required
-                >
-
-
-                <div class="checkout-total">
-                    <span>Payable Amount</span>
-                    <strong id="checkoutTotal">₹0.00</strong>
-                </div>
-
-
-                <button
-                    id="payNowBtn"
-                    class="primary-btn full-width"
-                    type="submit"
-                >
-                    Continue to PayU
-                </button>
-
-                <p id="checkoutMessage" class="form-message"></p>
-
-            </form>
-
-        </div>
+        <button class="primary" id="verifyOtpBtn">
+          Verify OTP
+        </button>
+      </div>
     </div>
 
+    <div id="loggedInView" class="hidden">
+      <p id="accountPhone"></p>
+      <br>
+      <button class="primary" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+</div>
 
-    <!-- PRODUCT DETAILS MODAL -->
-    <div id="productModal" class="modal hidden">
-
-        <div class="modal-overlay" data-close="productModal"></div>
-
-        <div class="modal-content product-detail-content">
-
-            <button
-                class="modal-close"
-                type="button"
-                data-close="productModal"
-                aria-label="Close"
-            >
-                ×
-            </button>
-
-            <div id="productDetails">
-                <!-- Product details loaded by app.js -->
-            </div>
-
-        </div>
+<!-- CART -->
+<div class="modal" id="cartModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Your Cart</h2>
+      <button class="close" data-close="cartModal">&times;</button>
     </div>
 
+    <div id="cartItems"></div>
 
-    <!-- INFORMATION MODAL -->
-    <div id="infoModal" class="modal hidden">
+    <div class="summary">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <strong>₹<span id="cartSubtotal">0</span></strong>
+      </div>
 
-        <div class="modal-overlay" data-close="infoModal"></div>
+      <div class="summary-row">
+        <span>Discount</span>
+        <strong>₹<span id="cartDiscount">0</span></strong>
+      </div>
 
-        <div class="modal-content">
+      <div class="summary-row total">
+        <span>Total</span>
+        <span>₹<span id="cartTotal">0</span></span>
+      </div>
 
-            <button
-                class="modal-close"
-                type="button"
-                data-close="infoModal"
-                aria-label="Close"
-            >
-                ×
-            </button>
+      <br>
 
-            <div id="infoContent"></div>
+      <button class="primary" id="checkoutBtn">
+        Proceed to Checkout
+      </button>
+    </div>
+  </div>
+</div>
 
-        </div>
+<!-- CHECKOUT -->
+<div class="modal" id="checkoutModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Checkout</h2>
+      <button class="close" data-close="checkoutModal">&times;</button>
     </div>
 
+    <form id="checkoutForm">
 
-    <!-- FOOTER -->
-    <footer class="site-footer">
+      <div class="form-group">
+        <label>House / Flat No.</label>
+        <input id="houseNo" required maxlength="120">
+      </div>
 
-        <div class="footer-container">
+      <div class="form-group">
+        <label>Street / Area</label>
+        <input id="street" required maxlength="200">
+      </div>
 
-            <div class="footer-column">
+      <div class="form-group">
+        <label>City</label>
+        <input id="city" required maxlength="100">
+      </div>
 
-                <h3>Blurancy Cartify</h3>
+      <div class="form-group">
+        <label>PIN Code</label>
+        <input
+          id="pincode"
+          required
+          maxlength="6"
+          inputmode="numeric"
+        >
+      </div>
 
-                <p>
-                    Your online shopping destination.
-                </p>
+      <div class="form-group">
+        <label>Payment method</label>
 
-            </div>
+        <select id="paymentMethod">
+          <option value="ONLINE">Online Payment</option>
+          <option value="COD">Cash on Delivery</option>
+        </select>
+      </div>
 
+      <button class="primary" type="submit">
+        Place Order
+      </button>
 
-            <div class="footer-column">
+    </form>
+  </div>
+</div>
 
-                <h3>Quick Links</h3>
+<!-- ORDERS -->
+<div class="modal" id="ordersModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>My Orders</h2>
+      <button class="close" data-close="ordersModal">&times;</button>
+    </div>
 
-                <button
-                    class="footer-link"
-                    data-info="about"
-                    type="button"
-                >
-                    About Us
-                </button>
+    <div id="ordersList">
+      Loading...
+    </div>
+  </div>
+</div>
 
-                <button
-                    class="footer-link"
-                    data-info="contact"
-                    type="button"
-                >
-                    Contact
-                </button>
+<div id="toast" class="toast"></div>
 
-            </div>
-
-
-            <div class="footer-column">
-
-                <h3>Policies</h3>
-
-                <button
-                    class="footer-link"
-                    data-info="privacy"
-                    type="button"
-                >
-                    Privacy Policy
-                </button>
-
-                <button
-                    class="footer-link"
-                    data-info="terms"
-                    type="button"
-                >
-                    Terms & Conditions
-                </button>
-
-                <button
-                    class="footer-link"
-                    data-info="refund"
-                    type="button"
-                >
-                    Refund & Return
-                </button>
-
-                <button
-                    class="footer-link"
-                    data-info="shipping"
-                    type="button"
-                >
-                    Shipping Policy
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="footer-bottom">
-
-            <p>
-                © <span id="currentYear"></span>
-                Blurancy Cartify. All rights reserved.
-            </p>
-
-        </div>
-
-    </footer>
-
-
-    <!-- SUPABASE -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- YOUR APPLICATION JAVASCRIPT -->
-    <script src="assets/app.js"></script>
+<script src="assets/app.js"></script>
 
 </body>
 </html>
+```
