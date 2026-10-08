@@ -1,1335 +1,785 @@
-https://avfrwtvbbytyyoxoubjd.supabase.co/rest/v1/
-
-sb_publishable_XW68RVEL3u7sRrHiZ0PoFQ_gTmfvncj
-
 ```javascript
-/*
-  Blurancy Cartify
-  Customer frontend
+/* =========================================================
+   BLURANCY CARTIFY
+   SUPABASE FRONTEND
+   ========================================================= */
 
-  IMPORTANT:
-  Replace these two values with your Supabase project values.
 
-  Supabase Dashboard:
-  Project Settings
-  -> API
-  -> Project URL
-  -> Publishable/Anon key
-*/
+/* =========================================================
+   1. SUPABASE CONFIGURATION
+   ========================================================= */
 
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_OR_ANON_KEY_HERE";
 
-const supabaseClient =
-  window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
 
-/*
-  Optional secure backend.
 
-  Keep this EMPTY until your HTTPS backend is deployed.
-
-  DO NOT put:
-  - PayU LIVE Salt
-  - payment secret
-  - private API key
-  - webhook secret
-
-  in this file.
-*/
-const API_BASE_URL = "";
+/* =========================================================
+   2. GLOBAL VARIABLES
+   ========================================================= */
 
 let products = [];
-let cart = [];
-let currentUser = null;
+let cart = JSON.parse(localStorage.getItem("blurancy_cart") || "[]");
+
 let currentSearch = "";
-let currentCategory = "";
-let minPrice = "";
-let maxPrice = "";
 
-const $ = (id) => document.getElementById(id);
 
-function money(value) {
-  return Number(value || 0).toLocaleString("en-IN");
-}
+/* =========================================================
+   3. PAGE ELEMENTS
+   ========================================================= */
 
-function toast(message) {
-  const el = $("toast");
+const productsGrid = document.getElementById("productsGrid");
+const loading = document.getElementById("loading");
+const errorMessage = document.getElementById("errorMessage");
 
-  el.textContent = message;
-  el.classList.add("show");
+const searchInput = document.getElementById("searchInput");
 
-  clearTimeout(window.__toastTimer);
+const cartCount = document.getElementById("cartCount");
+const cartItems = document.getElementById("cartItems");
+const cartTotal = document.getElementById("cartTotal");
 
-  window.__toastTimer = setTimeout(() => {
-    el.classList.remove("show");
-  }, 2500);
-}
+const cartModal = document.getElementById("cartModal");
+const loginModal = document.getElementById("loginModal");
 
-function openModal(id) {
-  $(id).classList.add("show");
-}
+const loginBtn = document.getElementById("loginBtn");
+const cartBtn = document.getElementById("cartBtn");
 
-function closeModal(id) {
-  $(id).classList.remove("show");
-}
+const closeLogin = document.getElementById("closeLogin");
+const closeCart = document.getElementById("closeCart");
 
-function validPhone(phone) {
-  return /^[6-9]\d{9}$/.test(String(phone));
-}
+const emailInput = document.getElementById("emailInput");
+const otpInput = document.getElementById("otpInput");
 
-function validPin(pin) {
-  return /^\d{6}$/.test(String(pin));
-}
+const sendOtpBtn = document.getElementById("sendOtpBtn");
+const verifyOtpBtn = document.getElementById("verifyOtpBtn");
 
-/* -----------------------------
-   API helper
------------------------------ */
+const loginMessage = document.getElementById("loginMessage");
 
-async function backendRequest(path, options = {}) {
-  if (!API_BASE_URL) {
-    throw new Error(
-      "Secure backend is not connected yet. Configure API_BASE_URL."
-    );
-  }
+const checkoutBtn = document.getElementById("checkoutBtn");
 
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {})
-  };
 
-  const { data: sessionData } =
-    await supabaseClient.auth.getSession();
-
-  if (sessionData?.session?.access_token) {
-    headers.Authorization =
-      `Bearer ${sessionData.session.access_token}`;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}${path}`,
-    {
-      ...options,
-      headers
-    }
-  );
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      data.message ||
-      "Request failed."
-    );
-  }
-
-  return data;
-}
-
-/* -----------------------------
-   Products
------------------------------ */
+/* =========================================================
+   4. LOAD PRODUCTS FROM SUPABASE
+   ========================================================= */
 
 async function loadProducts() {
-  const container = $("products");
 
-  container.innerHTML =
-    `<div class="empty">Loading products...</div>`;
+    loading.style.display = "block";
+    errorMessage.textContent = "";
+    productsGrid.innerHTML = "";
 
-  try {
-    /*
-      IMPORTANT:
-      This expects your product table to be called "products".
+    try {
 
-      If your completed SQL uses a different table name,
-      change ONLY this query after checking your schema.
-    */
+        const { data, error } = await supabaseClient
+            .from("products")
+            .select("*")
+            .order("id", { ascending: true });
 
-    const { data, error } =
-      await supabaseClient
-        .from("products")
-        .select("*")
-        .order("id", { ascending: true });
+        if (error) {
+            throw error;
+        }
 
-    if (error) {
-      throw error;
+        products = Array.isArray(data) ? data : [];
+
+        loading.style.display = "none";
+
+        if (products.length === 0) {
+
+            productsGrid.innerHTML = `
+                <div class="empty">
+                    <h3>No products found</h3>
+                    <p>Add products to your Supabase products table.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        renderProducts();
+
+    } catch (error) {
+
+        loading.style.display = "none";
+
+        console.error("Supabase product error:", error);
+
+        errorMessage.textContent =
+            "Unable to load products. Check your Supabase connection and RLS policies.";
+
     }
-
-    products = Array.isArray(data) ? data : [];
-
-    buildCategories();
-    renderProducts();
-
-  } catch (error) {
-    console.error("Product loading error:", error);
-
-    container.innerHTML = `
-      <div class="empty">
-        <h3>Products could not be loaded</h3>
-        <p>${escapeHtml(error.message)}</p>
-      </div>
-    `;
-  }
 }
 
-function buildCategories() {
-  const select = $("categoryFilter");
 
-  const categories = [
-    ...new Set(
-      products
-        .map(product => product.category)
-        .filter(Boolean)
-    )
-  ].sort();
+/* =========================================================
+   5. PRODUCT VALUE HELPERS
+   ========================================================= */
 
-  select.innerHTML =
-    `<option value="">All categories</option>`;
+function getProductName(product) {
 
-  for (const category of categories) {
-    const option = document.createElement("option");
-
-    option.value = category;
-    option.textContent = category;
-
-    select.appendChild(option);
-  }
-
-  select.value = currentCategory;
+    return (
+        product.name ||
+        product.product_name ||
+        product.title ||
+        "Product"
+    );
 }
 
-function getProductImage(product) {
-  return (
-    product.image ||
-    product.image_url ||
-    product.thumbnail ||
-    "https://via.placeholder.com/600x600?text=Blurancy+Cartify"
-  );
-}
 
 function getProductPrice(product) {
-  return Number(
-    product.price ??
-    product.sale_price ??
-    0
-  );
+
+    const price =
+        product.price ??
+        product.selling_price ??
+        product.sale_price ??
+        0;
+
+    const number = Number(price);
+
+    return Number.isFinite(number) ? number : 0;
 }
 
-function getProductMrp(product) {
-  return Number(
-    product.mrp ??
-    product.original_price ??
-    getProductPrice(product)
-  );
+
+function getOldPrice(product) {
+
+    const price =
+        product.old_price ??
+        product.original_price ??
+        product.mrp ??
+        null;
+
+    if (price === null) {
+        return null;
+    }
+
+    const number = Number(price);
+
+    return Number.isFinite(number) ? number : null;
 }
 
-function getProductStock(product) {
-  return Number(
-    product.stock ??
-    product.inventory ??
-    0
-  );
+
+function getProductImage(product) {
+
+    return (
+        product.image_url ||
+        product.image ||
+        product.thumbnail ||
+        "https://placehold.co/600x400?text=Blurancy+Cartify"
+    );
 }
+
+
+function getProductDescription(product) {
+
+    return (
+        product.description ||
+        "Quality product from Blurancy Cartify."
+    );
+}
+
+
+/* =========================================================
+   6. DISPLAY PRODUCTS
+   ========================================================= */
 
 function renderProducts() {
-  const container = $("products");
 
-  const filtered = products.filter(product => {
+    productsGrid.innerHTML = "";
 
-    const name =
-      String(product.name || "").toLowerCase();
+    const filteredProducts = products.filter(product => {
 
-    const category =
-      String(product.category || "").toLowerCase();
+        const name = getProductName(product).toLowerCase();
 
-    const search =
-      currentSearch.toLowerCase();
+        const description =
+            getProductDescription(product).toLowerCase();
 
-    if (
-      search &&
-      !name.includes(search) &&
-      !category.includes(search)
-    ) {
-      return false;
-    }
-
-    if (
-      currentCategory &&
-      String(product.category) !== currentCategory
-    ) {
-      return false;
-    }
-
-    const price = getProductPrice(product);
-
-    if (minPrice !== "" && price < Number(minPrice)) {
-      return false;
-    }
-
-    if (maxPrice !== "" && price > Number(maxPrice)) {
-      return false;
-    }
-
-    return true;
-  });
-
-  if (!filtered.length) {
-    container.innerHTML = `
-      <div class="empty">
-        <h3>No products found</h3>
-        <p>Try another search or filter.</p>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = filtered.map(product => {
-
-    const price = getProductPrice(product);
-    const mrp = getProductMrp(product);
-    const stock = getProductStock(product);
-
-    return `
-      <article class="product">
-
-        <img
-          src="${escapeAttribute(getProductImage(product))}"
-          alt="${escapeAttribute(product.name || "Product")}"
-          loading="lazy"
-          onerror="this.src='https://via.placeholder.com/600x600?text=Product'"
-        >
-
-        <div class="product-body">
-
-          <div class="product-category">
-            ${escapeHtml(product.category || "Product")}
-          </div>
-
-          <div class="product-name">
-            ${escapeHtml(product.name || "Unnamed Product")}
-          </div>
-
-          <div>
-            <span class="price">
-              ₹${money(price)}
-            </span>
-
-            ${
-              mrp > price
-              ? `<span class="mrp">₹${money(mrp)}</span>`
-              : ""
-            }
-          </div>
-
-          <div class="stock">
-            ${
-              stock > 0
-              ? `${stock} available`
-              : "Out of stock"
-            }
-          </div>
-
-        </div>
-
-        <div class="product-actions">
-
-          <button
-            class="add-btn"
-            onclick="addToCart('${escapeAttribute(String(product.id))}')"
-            ${stock <= 0 ? "disabled" : ""}
-          >
-            Add to Cart
-          </button>
-
-          <button
-            class="buy-btn"
-            onclick="buyNow('${escapeAttribute(String(product.id))}')"
-            ${stock <= 0 ? "disabled" : ""}
-          >
-            Buy Now
-          </button>
-
-        </div>
-
-      </article>
-    `;
-  }).join("");
-}
-
-/* -----------------------------
-   Cart
------------------------------ */
-
-function loadLocalCart() {
-  try {
-    const saved =
-      JSON.parse(
-        localStorage.getItem("blurancy_cartify_cart") || "[]"
-      );
-
-    cart = Array.isArray(saved) ? saved : [];
-
-  } catch {
-    cart = [];
-  }
-
-  validateLocalCart();
-}
-
-function saveLocalCart() {
-  localStorage.setItem(
-    "blurancy_cartify_cart",
-    JSON.stringify(cart)
-  );
-}
-
-function validateLocalCart() {
-  cart = cart
-    .map(item => {
-
-      const product =
-        products.find(
-          p => String(p.id) === String(item.id)
+        return (
+            name.includes(currentSearch) ||
+            description.includes(currentSearch)
         );
 
-      if (!product) {
-        return null;
-      }
+    });
 
-      const stock = getProductStock(product);
 
-      let quantity =
-        Number.parseInt(item.quantity, 10);
+    if (filteredProducts.length === 0) {
 
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        quantity = 1;
-      }
+        productsGrid.innerHTML = `
+            <div class="empty">
+                <h3>No matching products</h3>
+                <p>Try another search.</p>
+            </div>
+        `;
 
-      if (stock > 0) {
-        quantity = Math.min(quantity, stock);
-      }
+        return;
+    }
 
-      return {
-        id: product.id,
-        quantity
-      };
-    })
-    .filter(Boolean);
 
-  saveLocalCart();
+    filteredProducts.forEach(product => {
+
+        const price = getProductPrice(product);
+        const oldPrice = getOldPrice(product);
+
+        const card = document.createElement("div");
+
+        card.className = "product-card";
+
+
+        card.innerHTML = `
+            <img
+                src="${escapeHtml(getProductImage(product))}"
+                alt="${escapeHtml(getProductName(product))}"
+                onerror="this.src='https://placehold.co/600x400?text=Product'"
+            >
+
+            <div class="product-info">
+
+                <h3>
+                    ${escapeHtml(getProductName(product))}
+                </h3>
+
+                <p>
+                    ${escapeHtml(getProductDescription(product))}
+                </p>
+
+                <div class="price">
+
+                    <strong>
+                        ₹${price.toFixed(2)}
+                    </strong>
+
+                    ${
+                        oldPrice !== null && oldPrice > price
+                        ?
+                        `<span class="old-price">
+                            ₹${oldPrice.toFixed(2)}
+                        </span>`
+                        :
+                        ""
+                    }
+
+                </div>
+
+                <button
+                    class="add-cart"
+                    data-product-id="${product.id}"
+                >
+                    Add to Cart
+                </button>
+
+            </div>
+        `;
+
+
+        productsGrid.appendChild(card);
+
+    });
+
+
+    document.querySelectorAll(".add-cart").forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const productId = button.dataset.productId;
+
+            addToCart(productId);
+
+        });
+
+    });
+
 }
+
+
+/* =========================================================
+   7. SEARCH
+   ========================================================= */
+
+searchInput.addEventListener("input", event => {
+
+    currentSearch =
+        event.target.value.trim().toLowerCase();
+
+    renderProducts();
+
+});
+
+
+/* =========================================================
+   8. CART
+   ========================================================= */
+
+function saveCart() {
+
+    localStorage.setItem(
+        "blurancy_cart",
+        JSON.stringify(cart)
+    );
+
+}
+
 
 function addToCart(productId) {
-  const product =
-    products.find(
-      p => String(p.id) === String(productId)
+
+    const product = products.find(
+        item => String(item.id) === String(productId)
     );
 
-  if (!product) {
-    toast("Product not found.");
-    return;
-  }
+    if (!product) {
 
-  const stock = getProductStock(product);
+        alert("Product not found.");
 
-  if (stock <= 0) {
-    toast("Product is out of stock.");
-    return;
-  }
-
-  const existing =
-    cart.find(
-      item => String(item.id) === String(product.id)
-    );
-
-  if (existing) {
-
-    if (existing.quantity >= stock) {
-      toast("Maximum available quantity reached.");
-      return;
+        return;
     }
 
-    existing.quantity += 1;
 
-  } else {
-
-    cart.push({
-      id: product.id,
-      quantity: 1
-    });
-  }
-
-  saveLocalCart();
-  updateCartCount();
-
-  toast("Added to cart.");
-}
-
-function buyNow(productId) {
-  addToCart(productId);
-  openCart();
-}
-
-function changeQuantity(productId, amount) {
-
-  const item =
-    cart.find(
-      x => String(x.id) === String(productId)
+    const existingItem = cart.find(
+        item => String(item.productId) === String(productId)
     );
 
-  const product =
-    products.find(
-      p => String(p.id) === String(productId)
-    );
 
-  if (!item || !product) {
-    return;
-  }
+    if (existingItem) {
 
-  const stock = getProductStock(product);
+        existingItem.quantity += 1;
 
-  item.quantity += amount;
+    } else {
 
-  if (item.quantity <= 0) {
-    cart =
-      cart.filter(
-        x => String(x.id) !== String(productId)
-      );
-  } else if (stock > 0 && item.quantity > stock) {
-    item.quantity = stock;
-    toast("Stock limit reached.");
-  }
+        cart.push({
+            productId: product.id,
+            quantity: 1
+        });
 
-  saveLocalCart();
-  updateCartCount();
-  renderCart();
+    }
+
+
+    saveCart();
+
+    updateCartCount();
+
+    alert("Product added to cart.");
+
 }
 
-function removeFromCart(productId) {
-
-  cart =
-    cart.filter(
-      x => String(x.id) !== String(productId)
-    );
-
-  saveLocalCart();
-  updateCartCount();
-  renderCart();
-}
 
 function updateCartCount() {
-  const count =
-    cart.reduce(
-      (sum, item) =>
-        sum + Number(item.quantity || 0),
-      0
+
+    const count = cart.reduce(
+        (total, item) =>
+            total + Number(item.quantity || 0),
+        0
     );
 
-  $("cartCount").textContent = count;
+    cartCount.textContent = count;
+
 }
 
-function getCartItems() {
 
-  return cart
-    .map(item => {
-
-      const product =
-        products.find(
-          p => String(p.id) === String(item.id)
-        );
-
-      if (!product) {
-        return null;
-      }
-
-      return {
-        product,
-        quantity: Number(item.quantity)
-      };
-    })
-    .filter(Boolean);
-}
-
-function calculateCart() {
-
-  const items = getCartItems();
-
-  const subtotal =
-    items.reduce(
-      (sum, item) =>
-        sum +
-        getProductPrice(item.product) *
-        item.quantity,
-      0
-    );
-
-  return {
-    subtotal,
-    discount: 0,
-    total: subtotal
-  };
-}
+/* =========================================================
+   9. DISPLAY CART
+   ========================================================= */
 
 function renderCart() {
 
-  const container = $("cartItems");
-  const items = getCartItems();
+    cartItems.innerHTML = "";
 
-  if (!items.length) {
+    let total = 0;
 
-    container.innerHTML = `
-      <div class="empty">
-        Your cart is empty.
-      </div>
-    `;
 
-    $("cartSubtotal").textContent = "0";
-    $("cartDiscount").textContent = "0";
-    $("cartTotal").textContent = "0";
+    if (cart.length === 0) {
 
-    return;
-  }
+        cartItems.innerHTML = `
+            <div class="empty">
+                <p>Your cart is empty.</p>
+            </div>
+        `;
 
-  container.innerHTML =
-    items.map(({ product, quantity }) => {
+        cartTotal.textContent = "0.00";
 
-      const price =
-        getProductPrice(product);
+        return;
+    }
 
-      return `
-        <div class="cart-item">
 
-          <img
-            src="${escapeAttribute(getProductImage(product))}"
-            alt="${escapeAttribute(product.name || "Product")}"
-          >
+    cart.forEach(item => {
 
-          <div class="cart-info">
+        const product = products.find(
+            product =>
+                String(product.id) === String(item.productId)
+        );
 
-            <strong>
-              ${escapeHtml(product.name || "Product")}
-            </strong>
+
+        if (!product) {
+            return;
+        }
+
+
+        const price = getProductPrice(product);
+
+        const quantity = Math.max(
+            1,
+            Number(item.quantity || 1)
+        );
+
+        const subtotal = price * quantity;
+
+        total += subtotal;
+
+
+        const row = document.createElement("div");
+
+        row.className = "cart-item";
+
+
+        row.innerHTML = `
+            <div>
+                <strong>
+                    ${escapeHtml(getProductName(product))}
+                </strong>
+
+                <p>
+                    ₹${price.toFixed(2)}
+                    ×
+                    ${quantity}
+                </p>
+            </div>
 
             <div>
-              ₹${money(price)}
-            </div>
 
-            <div class="quantity">
+                <strong>
+                    ₹${subtotal.toFixed(2)}
+                </strong>
 
-              <button
-                onclick="changeQuantity('${escapeAttribute(String(product.id))}', -1)"
-              >
-                −
-              </button>
-
-              <strong>${quantity}</strong>
-
-              <button
-                onclick="changeQuantity('${escapeAttribute(String(product.id))}', 1)"
-              >
-                +
-              </button>
+                <button
+                    class="remove-cart"
+                    data-product-id="${product.id}"
+                >
+                    Remove
+                </button>
 
             </div>
+        `;
 
-            <button
-              class="remove"
-              onclick="removeFromCart('${escapeAttribute(String(product.id))}')"
-            >
-              Remove
-            </button>
 
-          </div>
+        cartItems.appendChild(row);
 
-        </div>
-      `;
+    });
 
-    }).join("");
 
-  const totals = calculateCart();
+    cartTotal.textContent = total.toFixed(2);
 
-  $("cartSubtotal").textContent =
-    money(totals.subtotal);
 
-  $("cartDiscount").textContent =
-    money(totals.discount);
+    document.querySelectorAll(".remove-cart").forEach(button => {
 
-  $("cartTotal").textContent =
-    money(totals.total);
-}
+        button.addEventListener("click", () => {
 
-function openCart() {
-  renderCart();
-  openModal("cartModal");
-}
+            removeFromCart(button.dataset.productId);
 
-/* -----------------------------
-   Supabase Auth / OTP
------------------------------ */
-
-async function loadCurrentUser() {
-
-  const {
-    data,
-    error
-  } = await supabaseClient.auth.getSession();
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  currentUser = data.session?.user || null;
-
-  updateAccountUI();
-}
-
-function updateAccountUI() {
-
-  if (currentUser) {
-
-    $("loggedOutView").classList.add("hidden");
-    $("loggedInView").classList.remove("hidden");
-
-    const phone =
-      currentUser.phone || "Logged in";
-
-    $("accountPhone").textContent =
-      `Phone: ${phone}`;
-
-    $("accountBtn").textContent = "Account";
-
-  } else {
-
-    $("loggedOutView").classList.remove("hidden");
-    $("loggedInView").classList.add("hidden");
-
-    $("accountBtn").textContent = "Login";
-  }
-}
-
-async function sendOtp() {
-
-  const phone =
-    $("phoneInput").value.trim();
-
-  if (!validPhone(phone)) {
-    toast("Enter a valid 10-digit Indian mobile number.");
-    return;
-  }
-
-  try {
-
-    const {
-      error
-    } =
-      await supabaseClient.auth.signInWithOtp({
-        phone: `+91${phone}`
-      });
-
-    if (error) {
-      throw error;
-    }
-
-    $("otpArea").classList.remove("hidden");
-
-    toast("OTP sent.");
-
-  } catch (error) {
-
-    console.error(error);
-
-    toast(
-      error.message ||
-      "Unable to send OTP."
-    );
-  }
-}
-
-async function verifyOtp() {
-
-  const phone =
-    $("phoneInput").value.trim();
-
-  const token =
-    $("otpInput").value.trim();
-
-  if (!validPhone(phone)) {
-    toast("Invalid phone number.");
-    return;
-  }
-
-  if (!/^\d{6}$/.test(token)) {
-    toast("Enter the 6-digit OTP.");
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient.auth.verifyOtp({
-        phone: `+91${phone}`,
-        token,
-        type: "sms"
-      });
-
-    if (error) {
-      throw error;
-    }
-
-    currentUser =
-      data.user || null;
-
-    updateAccountUI();
-
-    toast("Login successful.");
-
-  } catch (error) {
-
-    console.error(error);
-
-    toast(
-      error.message ||
-      "OTP verification failed."
-    );
-  }
-}
-
-async function logout() {
-
-  const {
-    error
-  } =
-    await supabaseClient.auth.signOut();
-
-  if (error) {
-    toast(error.message);
-    return;
-  }
-
-  currentUser = null;
-
-  updateAccountUI();
-
-  closeModal("accountModal");
-
-  toast("Logged out.");
-}
-
-/* -----------------------------
-   Checkout
------------------------------ */
-
-function openCheckout() {
-
-  if (!cart.length) {
-    toast("Your cart is empty.");
-    return;
-  }
-
-  if (!currentUser) {
-
-    closeModal("cartModal");
-    openModal("accountModal");
-
-    toast("Login before checkout.");
-
-    return;
-  }
-
-  closeModal("cartModal");
-  openModal("checkoutModal");
-}
-
-async function placeOrder(event) {
-
-  event.preventDefault();
-
-  if (!currentUser) {
-    toast("Please login.");
-    return;
-  }
-
-  const houseNo =
-    $("houseNo").value.trim();
-
-  const street =
-    $("street").value.trim();
-
-  const city =
-    $("city").value.trim();
-
-  const pincode =
-    $("pincode").value.trim();
-
-  const paymentMethod =
-    $("paymentMethod").value;
-
-  if (!houseNo || !street || !city) {
-    toast("Complete your address.");
-    return;
-  }
-
-  if (!validPin(pincode)) {
-    toast("Enter a valid 6-digit PIN code.");
-    return;
-  }
-
-  const items =
-    getCartItems().map(({ product, quantity }) => ({
-      product_id: product.id,
-      quantity
-    }));
-
-  if (!items.length) {
-    toast("Cart is empty.");
-    return;
-  }
-
-  /*
-    ONLINE PAYMENT MUST GO THROUGH YOUR SECURE BACKEND.
-
-    Never create or verify a live PayU payment using
-    secret credentials in this browser code.
-  */
-
-  if (
-    paymentMethod === "ONLINE" &&
-    !API_BASE_URL
-  ) {
-    toast(
-      "Online payment backend is not connected yet."
-    );
-    return;
-  }
-
-  try {
-
-    if (paymentMethod === "COD") {
-
-      await createSupabaseOrder({
-        items,
-        houseNo,
-        street,
-        city,
-        pincode,
-        paymentMethod: "COD"
-      });
-
-      cart = [];
-      saveLocalCart();
-      updateCartCount();
-
-      closeModal("checkoutModal");
-
-      toast("Order placed successfully.");
-
-      await loadOrders();
-
-      return;
-    }
-
-    /*
-      Online payment:
-      secure backend creates the payment order.
-    */
-
-    const result =
-      await backendRequest(
-        "/api/orders/upi",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            customer: {
-              phone:
-                currentUser.phone
-                  ? currentUser.phone.replace("+91", "")
-                  : ""
-            },
-            address: {
-              houseNo,
-              street,
-              city,
-              pincode
-            },
-            items
-          })
-        }
-      );
-
-    /*
-      For the web version, the backend should return
-      the official hosted-payment URL.
-
-      Example:
-      result.paymentUrl
-    */
-
-    if (!result.paymentUrl) {
-      throw new Error(
-        "Payment URL was not returned by the secure backend."
-      );
-    }
-
-    window.location.href =
-      result.paymentUrl;
-
-  } catch (error) {
-
-    console.error(error);
-
-    toast(
-      error.message ||
-      "Unable to place order."
-    );
-  }
-}
-
-/* -----------------------------
-   Supabase order creation
------------------------------ */
-
-async function createSupabaseOrder({
-  items,
-  houseNo,
-  street,
-  city,
-  pincode,
-  paymentMethod
-}) {
-
-  /*
-    This section assumes your database has an
-    "orders" table and an "order_items" table.
-
-    If your final SQL uses different names,
-    those exact names must be matched here.
-  */
-
-  const totals =
-    calculateCart();
-
-  const {
-    data: order,
-    error: orderError
-  } =
-    await supabaseClient
-      .from("orders")
-      .insert({
-        user_id: currentUser.id,
-        subtotal: totals.subtotal,
-        discount: totals.discount,
-        total: totals.total,
-        payment_method: paymentMethod,
-        payment_status:
-          paymentMethod === "COD"
-            ? "pending"
-            : "pending",
-        status: "pending",
-        house_no: houseNo,
-        street,
-        city,
-        pincode
-      })
-      .select()
-      .single();
-
-  if (orderError) {
-    throw orderError;
-  }
-
-  const orderItems =
-    getCartItems().map(({ product, quantity }) => ({
-      order_id: order.id,
-      product_id: product.id,
-      quantity,
-      unit_price: getProductPrice(product)
-    }));
-
-  const {
-    error: itemsError
-  } =
-    await supabaseClient
-      .from("order_items")
-      .insert(orderItems);
-
-  if (itemsError) {
-    throw itemsError;
-  }
-
-  return order;
-}
-
-/* -----------------------------
-   Orders
------------------------------ */
-
-async function loadOrders() {
-
-  const container =
-    $("ordersList");
-
-  if (!currentUser) {
-
-    container.innerHTML =
-      "<p>Please login to view orders.</p>";
-
-    return;
-  }
-
-  container.innerHTML =
-    "<p>Loading orders...</p>";
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("orders")
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .order("created_at", {
-          ascending: false
         });
 
-    if (error) {
-      throw error;
-    }
+    });
 
-    if (!data?.length) {
-
-      container.innerHTML =
-        "<p>No orders yet.</p>";
-
-      return;
-    }
-
-    container.innerHTML =
-      data.map(order => `
-        <div class="order">
-
-          <strong>
-            Order #${escapeHtml(String(order.id))}
-          </strong>
-
-          <div>
-            Total:
-            ₹${money(order.total)}
-          </div>
-
-          <div>
-            Payment:
-            ${escapeHtml(order.payment_method || "-")}
-          </div>
-
-          <span class="status">
-            ${escapeHtml(order.status || "pending")}
-          </span>
-
-        </div>
-      `).join("");
-
-  } catch (error) {
-
-    console.error(error);
-
-    container.innerHTML =
-      `<p>${escapeHtml(error.message)}</p>`;
-  }
 }
 
-/* -----------------------------
-   Search / Filters
------------------------------ */
 
-$("searchForm").addEventListener(
-  "submit",
-  event => {
+function removeFromCart(productId) {
 
-    event.preventDefault();
+    cart = cart.filter(
+        item =>
+            String(item.productId) !== String(productId)
+    );
 
-    currentSearch =
-      $("searchInput").value.trim();
+    saveCart();
 
-    renderProducts();
-  }
-);
+    updateCartCount();
 
-$("categoryFilter").addEventListener(
-  "change",
-  event => {
+    renderCart();
 
-    currentCategory =
-      event.target.value;
+}
 
-    renderProducts();
-  }
-);
 
-$("filterBtn").addEventListener(
-  "click",
-  () => {
+/* =========================================================
+   10. LOGIN MODAL
+   ========================================================= */
 
-    minPrice =
-      $("minPrice").value;
+loginBtn.addEventListener("click", () => {
 
-    maxPrice =
-      $("maxPrice").value;
+    loginModal.classList.remove("hidden");
 
-    if (
-      minPrice !== "" &&
-      maxPrice !== "" &&
-      Number(minPrice) > Number(maxPrice)
-    ) {
-      toast("Minimum price cannot exceed maximum price.");
-      return;
+});
+
+
+closeLogin.addEventListener("click", () => {
+
+    loginModal.classList.add("hidden");
+
+});
+
+
+/* =========================================================
+   11. EMAIL OTP LOGIN
+   ========================================================= */
+
+sendOtpBtn.addEventListener("click", async () => {
+
+    const email = emailInput.value.trim();
+
+    if (!email) {
+
+        loginMessage.textContent =
+            "Enter your email address.";
+
+        return;
     }
 
-    renderProducts();
-  }
-);
 
-/* -----------------------------
-   Buttons
------------------------------ */
+    loginMessage.textContent =
+        "Sending OTP...";
 
-$("accountBtn").addEventListener(
-  "click",
-  () => {
-    updateAccountUI();
-    openModal("accountModal");
-  }
-);
 
-$("ordersBtn").addEventListener(
-  "click",
-  async () => {
+    try {
 
-    openModal("ordersModal");
+        const { error } =
+            await supabaseClient.auth.signInWithOtp({
 
-    await loadOrders();
-  }
-);
+                email: email,
 
-$("cartBtn").addEventListener(
-  "click",
-  openCart
-);
+                options: {
+                    shouldCreateUser: true
+                }
 
-$("sendOtpBtn").addEventListener(
-  "click",
-  sendOtp
-);
+            });
 
-$("verifyOtpBtn").addEventListener(
-  "click",
-  verifyOtp
-);
 
-$("logoutBtn").addEventListener(
-  "click",
-  logout
-);
-
-$("checkoutBtn").addEventListener(
-  "click",
-  openCheckout
-);
-
-$("checkoutForm").addEventListener(
-  "submit",
-  placeOrder
-);
-
-/* Close buttons */
-
-document
-  .querySelectorAll("[data-close]")
-  .forEach(button => {
-
-    button.addEventListener(
-      "click",
-      () => {
-        closeModal(
-          button.dataset.close
-        );
-      }
-    );
-
-  });
-
-/* Close modal by clicking outside */
-
-document
-  .querySelectorAll(".modal")
-  .forEach(modal => {
-
-    modal.addEventListener(
-      "click",
-      event => {
-
-        if (event.target === modal) {
-          modal.classList.remove("show");
+        if (error) {
+            throw error;
         }
 
-      }
+
+        loginMessage.textContent =
+            "OTP sent. Check your email.";
+
+    } catch (error) {
+
+        console.error(error);
+
+        loginMessage.textContent =
+            error.message || "Unable to send OTP.";
+
+    }
+
+});
+
+
+/* =========================================================
+   12. VERIFY OTP
+   ========================================================= */
+
+verifyOtpBtn.addEventListener("click", async () => {
+
+    const email = emailInput.value.trim();
+    const token = otpInput.value.trim();
+
+
+    if (!email || !token) {
+
+        loginMessage.textContent =
+            "Enter your email and OTP.";
+
+        return;
+    }
+
+
+    loginMessage.textContent =
+        "Verifying OTP...";
+
+
+    try {
+
+        const { data, error } =
+            await supabaseClient.auth.verifyOtp({
+
+                email: email,
+                token: token,
+                type: "email"
+
+            });
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        loginMessage.textContent =
+            "Login successful.";
+
+        console.log("Logged in user:", data.user);
+
+        setTimeout(() => {
+
+            loginModal.classList.add("hidden");
+
+        }, 1000);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        loginMessage.textContent =
+            error.message || "Invalid OTP.";
+
+    }
+
+});
+
+
+/* =========================================================
+   13. CART BUTTON
+   ========================================================= */
+
+cartBtn.addEventListener("click", () => {
+
+    renderCart();
+
+    cartModal.classList.remove("hidden");
+
+});
+
+
+closeCart.addEventListener("click", () => {
+
+    cartModal.classList.add("hidden");
+
+});
+
+
+/* =========================================================
+   14. CHECKOUT
+   ========================================================= */
+
+checkoutBtn.addEventListener("click", async () => {
+
+    if (cart.length === 0) {
+
+        alert("Your cart is empty.");
+
+        return;
+    }
+
+
+    const {
+        data: {
+            user
+        }
+    } = await supabaseClient.auth.getUser();
+
+
+    if (!user) {
+
+        alert("Please login before checkout.");
+
+        loginModal.classList.remove("hidden");
+
+        return;
+    }
+
+
+    /*
+       IMPORTANT:
+
+       Do not put PayU secret credentials in this file.
+
+       Payment should be handled by a secure backend /
+       Supabase Edge Function.
+    */
+
+
+    alert(
+        "Checkout is ready for backend payment integration."
     );
 
-  });
+});
 
-/* -----------------------------
-   Supabase auth state
------------------------------ */
 
-supabaseClient.auth.onAuthStateChange(
-  (_event, session) => {
-
-    currentUser =
-      session?.user || null;
-
-    updateAccountUI();
-  }
-);
-
-/* -----------------------------
-   Security helpers
------------------------------ */
+/* =========================================================
+   15. SECURITY HELPER
+   ========================================================= */
 
 function escapeHtml(value) {
 
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
 }
 
-function escapeAttribute(value) {
-  return escapeHtml(value);
+
+/* =========================================================
+   16. CHECK LOGIN SESSION
+   ========================================================= */
+
+async function checkLogin() {
+
+    const {
+        data: {
+            session
+        }
+    } = await supabaseClient.auth.getSession();
+
+
+    if (session && session.user) {
+
+        loginBtn.textContent = "Account";
+
+    } else {
+
+        loginBtn.textContent = "Login";
+
+    }
+
 }
 
-/* -----------------------------
-   Start application
------------------------------ */
 
-async function init() {
+/* =========================================================
+   17. AUTH STATE LISTENER
+   ========================================================= */
 
-  loadLocalCart();
+supabaseClient.auth.onAuthStateChange(
+    (event, session) => {
 
-  updateCartCount();
+        if (session) {
 
-  await loadCurrentUser();
+            loginBtn.textContent = "Account";
 
-  await loadProducts();
+        } else {
 
-  updateCartCount();
+            loginBtn.textContent = "Login";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   18. START APPLICATION
+   ========================================================= */
+
+async function startApp() {
+
+    updateCartCount();
+
+    await checkLogin();
+
+    await loadProducts();
+
 }
 
-init();
+
+startApp();
 ```
