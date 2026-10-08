@@ -1,3 +1,25 @@
+const SUPABASE_URL = "YOUR_PROJECT_URL";
+const SUPABASE_KEY = "YOUR_PUBLISHABLE_OR_ANON_KEY";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+async function loadProducts() {
+    const { data, error } = await supabaseClient
+        .from("products")
+        .select("*");
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    console.log(data);
+}
+
+loadProducts();
+
+);
 ```javascript
 /* =========================================================
    BLURANCY CARTIFY
