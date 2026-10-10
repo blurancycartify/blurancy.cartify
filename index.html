@@ -2,128 +2,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Blurancy Cartify</title>
-
-    <link rel="stylesheet" href="assets/style.css">
-
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blurancy Cartify</title>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; }
+    input, button { box-sizing: border-box; width: 100%; padding: 12px; margin: 8px 0; }
+  </style>
 </head>
-
 <body>
+  <h1>Blurancy Cartify</h1>
+  <h2>Sign in with phone OTP</h2>
 
-<header class="header">
-    <div class="brand">
-        <h1>Blurancy Cartify</h1>
-        <p>Your online shopping store</p>
-    </div>
+  <label for="phone">Phone number (India)</label>
+  <input id="phone" type="tel" placeholder="+91XXXXXXXXXX">
+  <div id="recaptcha-container"></div>
+  <button id="send-otp">Send OTP</button>
 
-    <div class="header-actions">
-        <button id="loginBtn">Login</button>
-        <button id="cartBtn">
-            Cart (<span id="cartCount">0</span>)
-        </button>
-    </div>
-</header>
+  <label for="otp">Verification code</label>
+  <input id="otp" inputmode="numeric" placeholder="Enter SMS code">
+  <button id="verify-otp">Verify OTP</button>
+  <p id="status" role="status"></p>
 
-<main>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXxVUR-T3GXmMd_PkJHKcDQb1Ygn_OFdg",
+      authDomain: "blurancy-cartify.firebaseapp.com",
+      projectId: "blurancy-cartify",
+      storageBucket: "blurancy-cartify.firebasestorage.app",
+      messagingSenderId: "96196985251",
+      appId: "1:96196985251:web:b296bd3155b0dc73895a16",
+      measurementId: "G-L7361GSVCW"
+    };
 
-    <section class="hero">
-        <h2>Welcome to Blurancy Cartify</h2>
-        <p>Shop products at great prices.</p>
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    auth.useDeviceLanguage();
 
-        <div class="search-box">
-            <input
-                type="search"
-                id="searchInput"
-                placeholder="Search products..."
-            >
-        </div>
-    </section>
+    let confirmationResult = null;
+    let verifier = null;
+    const status = document.getElementById("status");
 
-    <section class="products-section">
-        <h2>Products</h2>
+    window.addEventListener("load", () => {
+      verifier = new firebase.auth.RecaptchaVerifier(
+        "recaptcha-container",
+        { size: "normal" }
+      );
+      verifier.render().catch(error => {
+        status.textContent = "reCAPTCHA error: " + error.message;
+      });
+    });
 
-        <div id="loading">
-            Loading products...
-        </div>
+    document.getElementById("send-otp").addEventListener("click", async () => {
+      const phone = document.getElementById("phone").value.trim();
+      if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+        status.textContent = "Enter your full phone number with country code, e.g. +91XXXXXXXXXX.";
+        return;
+      }
+      try {
+        status.textContent = "Sending OTP...";
+        confirmationResult = await auth.signInWithPhoneNumber(phone, verifier);
+        status.textContent = "OTP sent. Check your SMS.";
+      } catch (error) {
+        status.textContent = "Could not send OTP: " + error.message;
+        if (verifier) {
+          verifier.clear();
+          verifier = new firebase.auth.RecaptchaVerifier(
+            "recaptcha-container", { size: "normal" }
+          );
+          verifier.render().catch(() => {});
+        }
+      }
+    });
 
-        <div id="errorMessage" class="error"></div>
-
-        <div id="productsGrid" class="products-grid"></div>
-    </section>
-
-</main>
-
-<!-- Login Modal -->
-<div id="loginModal" class="modal hidden">
-
-    <div class="modal-content">
-
-        <button id="closeLogin" class="close">×</button>
-
-        <h2>Customer Login</h2>
-
-        <input
-            type="email"
-            id="emailInput"
-            placeholder="Enter your email"
-        >
-
-        <button id="sendOtpBtn">
-            Send Login OTP
-        </button>
-
-        <input
-            type="text"
-            id="otpInput"
-            placeholder="Enter OTP"
-            maxlength="6"
-        >
-
-        <button id="verifyOtpBtn">
-            Verify OTP
-        </button>
-
-        <p id="loginMessage"></p>
-
-    </div>
-
-</div>
-
-<!-- Cart Modal -->
-<div id="cartModal" class="modal hidden">
-
-    <div class="modal-content">
-
-        <button id="closeCart" class="close">×</button>
-
-        <h2>Your Cart</h2>
-
-        <div id="cartItems"></div>
-
-        <div class="cart-total">
-            Total:
-            ₹<span id="cartTotal">0.00</span>
-        </div>
-
-        <button id="checkoutBtn">
-            Checkout
-        </button>
-
-    </div>
-
-</div>
-
-<footer>
-    <p>© 2026 Blurancy Cartify. All rights reserved.</p>
-</footer>
-
-<script src="app.js"></script>
-
+    document.getElementById("verify-otp").addEventListener("click", async () => {
+      if (!confirmationResult) {
+        status.textContent = "Please request an OTP first.";
+        return;
+      }
+      const code = document.getElementById("otp").value.trim();
+      try {
+        const result = await confirmationResult.confirm(code);
+        status.textContent = "Phone verified successfully!";
+      } catch (error) {
+        status.textContent = "Verification failed: " + error.message;
+      }
+    });
+  </script>
 </body>
 </html>
 ```
