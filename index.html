@@ -4,27 +4,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blurancy Cartify</title>
+  <meta name="theme-color" content="#172554">
+  <title>Blurancy Cartify | Phone Verification</title>
+
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
   <style>
-    body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; }
-    input, button { box-sizing: border-box; width: 100%; padding: 12px; margin: 8px 0; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f1f5f9;
+      font-family: Arial, sans-serif;
+      color: #172554;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      padding: 28px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px #00000012;
+    }
+    h1 { margin: 0 0 8px; font-size: 26px; }
+    h2 { font-size: 19px; margin-top: 24px; }
+    p { line-height: 1.5; color: #475569; }
+    label { display: block; margin-top: 16px; font-weight: bold; }
+    input, button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 8px;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input { border: 1px solid #cbd5e1; }
+    button {
+      border: 0;
+      background: #1d4ed8;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    #recaptcha-container { margin: 18px 0; }
+    #status { overflow-wrap: anywhere; }
+    .small { font-size: 13px; }
   </style>
 </head>
+
 <body>
-  <h1>Blurancy Cartify</h1>
-  <h2>Sign in with phone OTP</h2>
+  <main class="card">
+    <h1>Blurancy Cartify</h1>
+    <p>Secure phone number verification</p>
 
-  <label for="phone">Phone number (India)</label>
-  <input id="phone" type="tel" placeholder="+91XXXXXXXXXX">
-  <div id="recaptcha-container"></div>
-  <button id="send-otp">Send OTP</button>
+    <h2>Sign in with OTP</h2>
 
-  <label for="otp">Verification code</label>
-  <input id="otp" inputmode="numeric" placeholder="Enter SMS code">
-  <button id="verify-otp">Verify OTP</button>
-  <p id="status" role="status"></p>
+    <label for="phone">Phone number</label>
+    <input
+      id="phone"
+      type="tel"
+      autocomplete="tel"
+      placeholder="+919876543210"
+      aria-describedby="phone-help"
+    >
+    <p id="phone-help" class="small">
+      Enter your full number, including country code +91.
+    </p>
+
+    <div id="recaptcha-container"></div>
+    <button id="send-otp" type="button">Send OTP</button>
+
+    <label for="otp">SMS verification code</label>
+    <input
+      id="otp"
+      type="text"
+      inputmode="numeric"
+      autocomplete="one-time-code"
+      placeholder="Enter verification code"
+    >
+    <button id="verify-otp" type="button">Verify OTP</button>
+
+    <p id="status" role="status" aria-live="polite">
+      Ready. Complete reCAPTCHA to continue.
+    </p>
+    <p class="small">
+      Real SMS delivery depends on Firebase configuration, billing,
+      SMS region policy, and verification limits.
+    </p>
+  </main>
 
   <script>
     const firebaseConfig = {
@@ -37,59 +108,127 @@
       measurementId: "G-L7361GSVCW"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    auth.useDeviceLanguage();
+    const status = document.getElementById("status");
+    const sendButton = document.getElementById("send-otp");
+    const verifyButton = document.getElementById("verify-otp");
 
     let confirmationResult = null;
     let verifier = null;
-    const status = document.getElementById("status");
+    let sending = false;
 
-    window.addEventListener("load", () => {
-      verifier = new firebase.auth.RecaptchaVerifier(
-        "recaptcha-container",
-        { size: "normal" }
-      );
-      verifier.render().catch(error => {
-        status.textContent = "reCAPTCHA error: " + error.message;
-      });
-    });
-
-    document.getElementById("send-otp").addEventListener("click", async () => {
-      const phone = document.getElementById("phone").value.trim();
-      if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-        status.textContent = "Enter your full phone number with country code, e.g. +91XXXXXXXXXX.";
-        return;
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
       }
-      try {
-        status.textContent = "Sending OTP...";
-        confirmationResult = await auth.signInWithPhoneNumber(phone, verifier);
-        status.textContent = "OTP sent. Check your SMS.";
-      } catch (error) {
-        status.textContent = "Could not send OTP: " + error.message;
+
+      const auth = firebase.auth();
+      auth.useDeviceLanguage();
+
+      function setupRecaptcha() {
         if (verifier) {
-          verifier.clear();
-          verifier = new firebase.auth.RecaptchaVerifier(
-            "recaptcha-container", { size: "normal" }
-          );
-          verifier.render().catch(() => {});
+          try { verifier.clear(); } catch (_) {}
         }
-      }
-    });
 
-    document.getElementById("verify-otp").addEventListener("click", async () => {
-      if (!confirmationResult) {
-        status.textContent = "Please request an OTP first.";
-        return;
+        verifier = new firebase.auth.RecaptchaVerifier(
+          "recaptcha-container",
+          {
+            size: "normal",
+            callback: () => {
+              status.textContent = "Verification complete. Tap Send OTP.";
+            },
+            "expired-callback": () => {
+              status.textContent = "reCAPTCHA expired. Please complete it again.";
+            }
+          }
+        );
+
+        verifier.render().catch(error => {
+          status.textContent =
+            "reCAPTCHA could not load: " + error.message;
+        });
       }
-      const code = document.getElementById("otp").value.trim();
-      try {
-        const result = await confirmationResult.confirm(code);
-        status.textContent = "Phone verified successfully!";
-      } catch (error) {
-        status.textContent = "Verification failed: " + error.message;
-      }
-    });
+
+      setupRecaptcha();
+
+      sendButton.addEventListener("click", async () => {
+        if (sending) return;
+
+        const phone = document.getElementById("phone").value.trim();
+
+        if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+          status.textContent =
+            "Enter a valid full phone number, including +91.";
+          return;
+        }
+
+        sending = true;
+        sendButton.disabled = true;
+        status.textContent = "Requesting verification...";
+
+        try {
+          confirmationResult =
+            await auth.signInWithPhoneNumber(phone, verifier);
+
+          status.textContent =
+            "OTP request accepted. Check your SMS messages.";
+        } catch (error) {
+          console.error("Firebase phone authentication:", error);
+
+          const messages = {
+            "auth/invalid-phone-number": "The phone number is invalid.",
+            "auth/too-many-requests": "Too many attempts. Try again later.",
+            "auth/quota-exceeded": "Firebase SMS quota has been exceeded.",
+            "auth/billing-not-enabled": "Firebase requires billing for this request.",
+            "auth/operation-not-allowed": "Enable Phone sign-in in Firebase.",
+            "auth/captcha-check-failed": "reCAPTCHA verification failed. Try again.",
+            "auth/unauthorized-domain": "Add blurancycartify.github.io to Authorized domains.",
+            "auth/network-request-failed": "Network error. Check your connection."
+          };
+
+          status.textContent =
+            messages[error.code] ||
+            ("Could not send OTP: " + error.code + " — " + error.message);
+
+          setupRecaptcha();
+        } finally {
+          sending = false;
+          sendButton.disabled = false;
+        }
+      });
+
+      verifyButton.addEventListener("click", async () => {
+        if (!confirmationResult) {
+          status.textContent = "Tap Send OTP first.";
+          return;
+        }
+
+        const code = document.getElementById("otp").value.trim();
+
+        if (!code) {
+          status.textContent = "Enter the verification code.";
+          return;
+        }
+
+        verifyButton.disabled = true;
+        status.textContent = "Checking verification code...";
+
+        try {
+          await confirmationResult.confirm(code);
+          status.textContent = "Phone verified successfully!";
+        } catch (error) {
+          console.error("OTP verification:", error);
+          status.textContent =
+            "Verification failed: " + error.code + " — " + error.message;
+        } finally {
+          verifyButton.disabled = false;
+        }
+      });
+
+    } catch (error) {
+      console.error("Firebase initialization:", error);
+      status.textContent =
+        "Firebase setup error: " + error.message;
+    }
   </script>
 </body>
 </html>
