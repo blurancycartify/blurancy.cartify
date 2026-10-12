@@ -1,105 +1,337 @@
-<script>
-const SUPABASE_PUBLIC_KEY = "YOUR_ACTUAL_PUBLIC_KEY";
-// Your remaining OTP JavaScript code
-</script>
 
-<section id="minimoth-login" style="max-width:400px;margin:24px auto;padding:20px;border:1px solid #ddd;border-radius:12px;font-family:Arial,sans-serif">
-  <h2>Login with Phone OTP</h2>
-  <p>Enter your Indian mobile number to receive an OTP.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172554">
+  <meta name="description" content="Shop electronics, fashion, home essentials and more at Blurancy Cartify.">
+  <title>Blurancy Cartify — Online Shopping</title>
 
-  <label for="mm-phone">Mobile number</label>
-  <input id="mm-phone" type="tel" placeholder="9876543210"
-    maxlength="13" autocomplete="tel"
-    style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:8px 0">
+  <link rel="stylesheet" href="assets/style.css">
 
-  <button id="mm-send" type="button"
-    style="padding:12px 18px;cursor:pointer">
-    Send OTP
-  </button>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #172033;
+    }
 
-  <div id="mm-verify-area" hidden>
-    <label for="mm-code">Enter OTP</label>
-    <input id="mm-code" type="text" inputmode="numeric"
-      autocomplete="one-time-code" maxlength="6"
-      placeholder="6-digit OTP"
-      style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:8px 0">
+    header {
+      padding: 16px;
+      background: #172554;
+      color: white;
+    }
 
-    <button id="mm-verify" type="button"
-      style="padding:12px 18px;cursor:pointer">
-      Verify OTP
-    </button>
-  </div>
+    .header-inner {
+      max-width: 1100px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
 
-  <p id="mm-status" role="status" aria-live="polite"></p>
-</section>
+    .brand {
+      font-size: 22px;
+      font-weight: bold;
+    }
 
-<script>
-(() => {
-  const FUNCTION_URL =
-    "https://avfrwtvbbytyyoxoubjd.supabase.co/functions/v1/minimoth-otp";
+    .brand span { color: #93c5fd; }
 
-  // Replace this placeholder with your Supabase public anon/publishable key.
-  // Never put your MiniMoth live API key here.
-  const SUPABASE_PUBLIC_KEY = "PASTE_YOUR_SUPABASE_PUBLIC_KEY_HERE";
+    #searchForm {
+      display: flex;
+      flex: 1;
+      min-width: 200px;
+      max-width: 480px;
+      gap: 8px;
+    }
 
-  const phoneInput = document.getElementById("mm-phone");
-  const codeInput = document.getElementById("mm-code");
-  const verifyArea = document.getElementById("mm-verify-area");
-  const status = document.getElementById("mm-status");
-  const sendButton = document.getElementById("mm-send");
-  const verifyButton = document.getElementById("mm-verify");
+    input, select, button {
+      font: inherit;
+      padding: 11px;
+      border-radius: 7px;
+    }
 
-  async function callOtp(action, extra = {}) {
-    const response = await fetch(FUNCTION_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_PUBLIC_KEY,
-        "Authorization": "Bearer " + SUPABASE_PUBLIC_KEY
-      },
-      body: JSON.stringify({
-        action,
-        phone: phoneInput.value.trim(),
-        ...extra
-      })
+    input, select {
+      border: 1px solid #cbd5e1;
+    }
+
+    #searchInput {
+      width: 100%;
+      min-width: 0;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      background: #2563eb;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px 16px;
+    }
+
+    .hero {
+      padding: 28px 22px;
+      background: #dbeafe;
+      border-radius: 14px;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 { margin-top: 0; }
+
+    .section {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px;
+      margin: 20px 0;
+    }
+
+    #productGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    #productGrid article {
+      padding: 14px;
+      border-radius: 10px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      overflow-wrap: anywhere;
+    }
+
+    #productGrid img {
+      max-width: 100%;
+      height: 160px;
+      object-fit: contain;
+    }
+
+    .login-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .login-row input {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    #mm-status {
+      min-height: 24px;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #64748b;
+    }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">🛒 Blurancy <span>Cartify</span></div>
+
+      <form id="searchForm">
+        <input id="searchInput" type="search"
+          placeholder="Search products..."
+          aria-label="Search products">
+        <button type="submit">Search</button>
+      </form>
+
+      <button id="loginBtn" type="button"
+        onclick="document.getElementById('minimoth-login').scrollIntoView({behavior:'smooth'})">
+        Login
+      </button>
+
+      <button id="cartBtn" type="button">
+        🛒 Cart (<span id="cartCount">0</span>)
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Welcome to Blurancy Cartify</h1>
+      <p>Discover electronics, fashion, home essentials and more.</p>
+      <p>Find your next favourite product today.</p>
+    </section>
+
+    <section class="section" aria-labelledby="productsHeading">
+      <h2 id="productsHeading">Our Products</h2>
+      <p id="productResultText" aria-live="polite">
+        Loading products...
+      </p>
+      <div id="productGrid"></div>
+      <p id="noProducts" hidden>
+        No products found. Please try another search.
+      </p>
+    </section>
+
+    <section class="section" id="cartPanel" hidden>
+      <h2>Your Cart</h2>
+      <div id="cartItems"></div>
+      <p id="cartMessage">Your cart is empty.</p>
+      <button id="clearCartBtn" type="button">Clear Cart</button>
+    </section>
+
+    <section class="section" id="minimoth-login">
+      <h2>Login with Phone OTP</h2>
+      <p>Enter your Indian mobile number to request an OTP.</p>
+
+      <form id="mm-send-form">
+        <div class="login-row">
+          <input id="mm-phone" type="tel"
+            inputmode="tel" autocomplete="tel"
+            maxlength="13" placeholder="9876543210"
+            aria-label="Indian mobile number" required>
+          <button id="mm-send" type="submit">Send OTP</button>
+        </div>
+      </form>
+
+      <form id="mm-verify-form" hidden>
+        <p>Enter the six-digit OTP you received.</p>
+        <div class="login-row">
+          <input id="mm-code" type="text"
+            inputmode="numeric" autocomplete="one-time-code"
+            maxlength="6" pattern="[0-9]{6}"
+            placeholder="6-digit OTP"
+            aria-label="One-time password" required>
+          <button id="mm-verify" type="submit">Verify OTP</button>
+        </div>
+      </form>
+
+      <p id="mm-status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="year"></span> Blurancy Cartify. All rights reserved.
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent =
+      new Date().getFullYear();
+  </script>
+
+  <script>
+    // OTP requests go through the Supabase Edge Function.
+    // Never put your MiniMoth API key or Supabase secret key here.
+    const SUPABASE_PUBLIC_KEY = "PASTE_YOUR_LEGACY_ANON_KEY_HERE";
+
+    const OTP_FUNCTION_URL =
+      "https://avfrwtvbbytyyoxoubjd.supabase.co/functions/v1/minimoth-otp";
+
+    const sendForm = document.getElementById("mm-send-form");
+    const verifyForm = document.getElementById("mm-verify-form");
+    const phoneInput = document.getElementById("mm-phone");
+    const codeInput = document.getElementById("mm-code");
+    const status = document.getElementById("mm-status");
+
+    function getPhoneNumber() {
+      let phone = phoneInput.value.trim().replace(/\s/g, "");
+
+      if (/^[6-9]\d{9}$/.test(phone)) {
+        phone = "+91" + phone;
+      }
+
+      if (!/^\+91[6-9]\d{9}$/.test(phone)) {
+        throw new Error("Enter a valid Indian mobile number.");
+      }
+
+      return phone;
+    }
+
+    async function callOtp(action, extra = {}) {
+      if (SUPABASE_PUBLIC_KEY.includes("PASTE_YOUR")) {
+        throw new Error(
+          "Supabase key is not configured in index.html."
+        );
+      }
+
+      const response = await fetch(OTP_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLIC_KEY,
+          "Authorization": "Bearer " + SUPABASE_PUBLIC_KEY
+        },
+        body: JSON.stringify({
+          action: action,
+          phone: getPhoneNumber(),
+          ...extra
+        })
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.ok) {
+        throw new Error(
+          result.error || "OTP request failed (HTTP " +
+          response.status + ")."
+        );
+      }
+
+      return result;
+    }
+
+    sendForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const button = document.getElementById("mm-send");
+      button.disabled = true;
+      status.textContent = "Requesting OTP...";
+
+      try {
+        await callOtp("send");
+        verifyForm.hidden = false;
+        status.textContent =
+          "OTP request accepted. Check the configured delivery channel.";
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
     });
 
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.ok) {
-      throw new Error(result.error || "OTP request failed.");
-    }
-    return result;
-  }
+    verifyForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
 
-  sendButton.addEventListener("click", async () => {
-    sendButton.disabled = true;
-    status.textContent = "Sending OTP…";
+      const button = document.getElementById("mm-verify");
+      button.disabled = true;
+      status.textContent = "Verifying OTP...";
 
-    try {
-      await callOtp("send");
-      verifyArea.hidden = false;
-      status.textContent =
-        "OTP requested. Check your WhatsApp or SMS for the code.";
-    } catch (error) {
-      status.textContent = error.message;
-    } finally {
-      sendButton.disabled = false;
-    }
-  });
+      try {
+        await callOtp("verify", { code: codeInput.value.trim() });
+        status.textContent =
+          "Phone verified. A full account login session must still be connected.";
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
 
-  verifyButton.addEventListener("click", async () => {
-    verifyButton.disabled = true;
-    status.textContent = "Verifying OTP…";
-
-    try {
-      await callOtp("verify", { code: codeInput.value.trim() });
-      status.textContent =
-        "Phone verified successfully. Connect this result to your login system.";
-    } catch (error) {
-      status.textContent = error.message;
-    } finally {
-      verifyButton.disabled = false;
-    }
-  });
-})();
-</script>
+  <!-- Keep your existing product JavaScript file. -->
+  <script src="assets/app.js"></script>
+</body>
+</html>
