@@ -78,3 +78,4 @@ async function loadProducts() {
 
 document.addEventListener("DOMContentLoaded", loadProducts);
 ```
+https://avfrwtvbbytyyoxoubjd.supabase.co/functions/v1/minimoth-otp
