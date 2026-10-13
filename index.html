@@ -1,166 +1,184 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blurancy Cartify Real OTP Verification</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    body {
-      background-color: #f4f6f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .card {
-      background: #ffffff;
-      padding: 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 420px;
-    }
-    .card h2 { color: #1a1a1a; margin-bottom: 0.5rem; font-size: 1.5rem; }
-    .card p { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
-    .form-group { margin-bottom: 1.25rem; }
-    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: #333; }
-    input[type="tel"], input[type="text"] {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      font-size: 1rem;
-      border: 1.5px solid #dcdfe6;
-      border-radius: 6px;
-      outline: none;
-    }
-    input:focus { border-color: #2563eb; }
-    .btn {
-      width: 100%;
-      padding: 0.85rem;
-      background-color: #2563eb;
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn:hover { background-color: #1d4ed8; }
-    .hidden { display: none; }
-    .status-msg { font-size: 0.85rem; margin-top: 0.75rem; text-align: center; }
-    .status-msg.error { color: #dc2626; }
-    .status-msg.success { color: #16a34a; }
-  </style>
-</head>
-<body>
 
-  <div class="card">
-    <!-- STEP 1: Phone Entry -->
-    <div id="step-phone">
-      <h2>Blurancy Cartify Login</h2>
-      <p>Enter your phone number with country code (e.g., +1...)</p>
-      <form id="phone-form">
-        <div class="form-group">
-          <label for="phone">Phone Number</label>
-          <input type="tel" id="phone" placeholder="+1 234 567 8900" required />
-        </div>
-        <button type="submit" class="btn">Send Real OTP</button>
-      </form>
-    </div>
+<!-- Blurancy Cartify: Real OTP Login -->
+<section id="blurancy-otp" class="blurancy-otp">
+  <h2>Blurancy Cartify Login</h2>
+  <p>Sign in using your mobile number</p>
 
-    <!-- STEP 2: OTP Entry -->
-    <div id="step-otp" class="hidden">
-      <h2>Enter Verification Code</h2>
-      <p>Check your phone for the SMS text code.</p>
-      <form id="otp-form">
-        <div class="form-group">
-          <label for="otp">6-Digit Code</label>
-          <input type="text" id="otp" maxlength="6" placeholder="123456" required />
-        </div>
-        <button type="submit" class="btn">Verify Code</button>
-      </form>
-    </div>
+  <label for="bc-phone">Mobile number</label>
+  <input
+    id="bc-phone"
+    type="tel"
+    placeholder="+919876543210"
+    autocomplete="tel"
+  />
 
-    <!-- Invisible container required by Firebase for reCAPTCHA protection -->
-    <div id="recaptcha-container"></div>
-    <div id="status-msg" class="status-msg"></div>
+  <button id="bc-send-otp" type="button">Send OTP</button>
+
+  <div id="bc-verify-section" hidden>
+    <label for="bc-otp-code">Enter OTP</label>
+    <input
+      id="bc-otp-code"
+      type="text"
+      inputmode="numeric"
+      maxlength="6"
+      autocomplete="one-time-code"
+      placeholder="6-digit OTP"
+    />
+    <button id="bc-verify-otp" type="button">Verify OTP</button>
   </div>
 
-  <!-- Firebase App SDK Scripts -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  <p id="bc-otp-status" role="status" aria-live="polite"></p>
+</section>
 
-    // TODO: Replace with your actual Firebase project configuration dictionary
-    const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
-      authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
-      projectId: "YOUR_FIREBASE_PROJECT_ID",
-      storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
-      appId: "YOUR_FIREBASE_APP_ID"
-    };
+<style>
+  .blurancy-otp {
+    max-width: 420px;
+    margin: 30px auto;
+    padding: 24px;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    font-family: Arial, sans-serif;
+    background: #fff;
+    color: #222;
+  }
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+  .blurancy-otp h2 {
+    margin-bottom: 8px;
+  }
 
-    const stepPhone = document.getElementById('step-phone');
-    const stepOtp = document.getElementById('step-otp');
-    const phoneForm = document.getElementById('phone-form');
-    const otpForm = document.getElementById('otp-form');
-    const phoneInput = document.getElementById('phone');
-    const otpInput = document.getElementById('otp');
-    const statusMsg = document.getElementById('status-msg');
+  .blurancy-otp label {
+    display: block;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
 
-    let confirmationResultGlobal = null;
+  .blurancy-otp input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #bbb;
+    border-radius: 7px;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
 
-    // Initialize invisible reCAPTCHA
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'invisible'
+  .blurancy-otp button {
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px;
+    background: #2874f0;
+    color: white;
+    border: 0;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+
+  .blurancy-otp button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+</style>
+
+<script>
+(() => {
+  const PROJECT_REF = "avfrwtvbbytyyoxoubjd";
+  const SUPABASE_PUBLIC_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+  const endpoint =
+    `https://${PROJECT_REF}.supabase.co/functions/v1/minimoth-otp`;
+
+  const phoneInput = document.getElementById("bc-phone");
+  const codeInput = document.getElementById("bc-otp-code");
+  const sendButton = document.getElementById("bc-send-otp");
+  const verifyButton = document.getElementById("bc-verify-otp");
+  const verifySection = document.getElementById("bc-verify-section");
+  const status = document.getElementById("bc-otp-status");
+
+  let requestedPhone = "";
+
+  async function requestOtp(action, code) {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_PUBLIC_KEY
+      },
+      body: JSON.stringify({
+        action,
+        phone: requestedPhone,
+        ...(code ? { code } : {})
+      })
     });
 
-    // Send OTP action
-    phoneForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const phoneNumber = phoneInput.value.trim();
-      statusMsg.textContent = "Sending real SMS code...";
-      statusMsg.className = "status-msg success";
+    const result = await response.json().catch(() => ({}));
 
-      try {
-        const appVerifier = window.recaptchaVerifier;
-        confirmationResultGlobal = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-        
-        stepPhone.classList.add('hidden');
-        stepOtp.classList.remove('hidden');
-        statusMsg.textContent = "OTP SMS sent successfully!";
-      } catch (error) {
-        statusMsg.textContent = error.message;
-        statusMsg.className = "status-msg error";
+    if (!response.ok) {
+      throw new Error(result.error || `Request failed (${response.status})`);
+    }
+
+    return result;
+  }
+
+  sendButton.addEventListener("click", async () => {
+    const phone = phoneInput.value.trim();
+
+    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+      status.textContent =
+        "Enter your full number, e.g. +919876543210.";
+      return;
+    }
+
+    requestedPhone = phone;
+    sendButton.disabled = true;
+    status.textContent = "Requesting OTP…";
+
+    try {
+      await requestOtp("send");
+      verifySection.hidden = false;
+      status.textContent =
+        "OTP request accepted. Check your SMS or WhatsApp.";
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      sendButton.disabled = false;
+    }
+  });
+
+  verifyButton.addEventListener("click", async () => {
+    const code = codeInput.value.trim();
+
+    if (!requestedPhone) {
+      status.textContent = "Please request an OTP first.";
+      return;
+    }
+
+    if (!/^\d{6}$/.test(code)) {
+      status.textContent = "Enter the 6-digit OTP.";
+      return;
+    }
+
+    verifyButton.disabled = true;
+    status.textContent = "Verifying…";
+
+    try {
+      const result = await requestOtp("verify", code);
+
+      if (!result.identity_id || !result.access_token) {
+        status.textContent =
+          "Provider response received, but no complete login session was returned.";
+        return;
       }
-    });
 
-    // Verify OTP action
-    otpForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const code = otpInput.value.trim();
-      statusMsg.textContent = "Verifying code...";
-
-      try {
-        const result = await confirmationResultGlobal.confirm(code);
-        const user = result.user;
-        statusMsg.textContent = "Login successful! Welcome to Blurancy Cartify.";
-        statusMsg.className = "status-msg success";
-        // User is successfully authenticated here
-      } catch (error) {
-        statusMsg.textContent = "Invalid code. Please try again.";
-        statusMsg.className = "status-msg error";
-      }
-    });
-  </script>
-</body>
-</html>
+      status.textContent = "Phone verified successfully!";
+      window.dispatchEvent(new CustomEvent(
+        "blurancy:phone-verified",
+        { detail: { phone: requestedPhone, identity_id: result.identity_id } }
+      ));
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      verifyButton.disabled = false;
+    }
+  });
+})();
+</script>
+<!-- End Blurancy Cartify OTP Login -->
