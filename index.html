@@ -1,182 +1,192 @@
 
-<!-- Blurancy Cartify: Real OTP Login -->
-<section id="blurancy-otp" class="blurancy-otp">
-  <h2>Blurancy Cartify Login</h2>
-  <p>Sign in using your mobile number</p>
+<!-- Blurancy Cartify OTP Login -->
+<section id="bc-otp-login">
+  <h2>Blurancy Cartify</h2>
+  <p>Login with your mobile number</p>
 
   <label for="bc-phone">Mobile number</label>
-  <input
-    id="bc-phone"
-    type="tel"
-    placeholder="+919876543210"
-    autocomplete="tel"
-  />
+  <input id="bc-phone" type="tel"
+         placeholder="+919876543210" autocomplete="tel">
+  <button id="bc-send" type="button">Send OTP</button>
 
-  <button id="bc-send-otp" type="button">Send OTP</button>
-
-  <div id="bc-verify-section" hidden>
-    <label for="bc-otp-code">Enter OTP</label>
-    <input
-      id="bc-otp-code"
-      type="text"
-      inputmode="numeric"
-      maxlength="6"
-      autocomplete="one-time-code"
-      placeholder="6-digit OTP"
-    />
-    <button id="bc-verify-otp" type="button">Verify OTP</button>
+  <div id="bc-verify-area" hidden>
+    <label for="bc-code">Enter the OTP you received</label>
+    <input id="bc-code" type="text" inputmode="numeric"
+           maxlength="6" autocomplete="one-time-code"
+           placeholder="6-digit OTP">
+    <button id="bc-verify" type="button">Verify OTP</button>
   </div>
 
-  <p id="bc-otp-status" role="status" aria-live="polite"></p>
+  <p id="bc-status" role="status" aria-live="polite"></p>
 </section>
 
 <style>
-  .blurancy-otp {
+  #bc-otp-login {
     max-width: 420px;
     margin: 30px auto;
     padding: 24px;
     border: 1px solid #ddd;
-    border-radius: 14px;
-    font-family: Arial, sans-serif;
+    border-radius: 12px;
     background: #fff;
     color: #222;
+    font-family: Arial, sans-serif;
   }
 
-  .blurancy-otp h2 {
-    margin-bottom: 8px;
-  }
-
-  .blurancy-otp label {
+  #bc-otp-login input,
+  #bc-otp-login button {
     display: block;
-    margin-top: 16px;
-    margin-bottom: 6px;
-  }
-
-  .blurancy-otp input {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #bbb;
-    border-radius: 7px;
     box-sizing: border-box;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 7px;
     font-size: 16px;
   }
 
-  .blurancy-otp button {
-    width: 100%;
-    margin-top: 14px;
-    padding: 12px;
+  #bc-otp-login input {
+    border: 1px solid #bbb;
+  }
+
+  #bc-otp-login button {
+    border: 0;
     background: #2874f0;
     color: white;
-    border: 0;
-    border-radius: 7px;
     cursor: pointer;
   }
 
-  .blurancy-otp button:disabled {
-    opacity: 0.6;
-    cursor: wait;
+  #bc-otp-login button:disabled {
+    opacity: .6;
+  }
+
+  #bc-status {
+    overflow-wrap: anywhere;
   }
 </style>
 
 <script>
 (() => {
-  const PROJECT_REF = "avfrwtvbbytyyoxoubjd";
-  const SUPABASE_PUBLIC_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY";
+  const PROJECT_URL =
+    "https://avfrwtvbbytyyoxoubjd.supabase.co";
 
-  const endpoint =
-    `https://${PROJECT_REF}.supabase.co/functions/v1/minimoth-otp`;
+  // Replace with your Supabase publishable key.
+  const PUBLIC_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY";
 
-  const phoneInput = document.getElementById("bc-phone");
-  const codeInput = document.getElementById("bc-otp-code");
-  const sendButton = document.getElementById("bc-send-otp");
-  const verifyButton = document.getElementById("bc-verify-otp");
-  const verifySection = document.getElementById("bc-verify-section");
-  const status = document.getElementById("bc-otp-status");
+  const endpoint = PROJECT_URL +
+    "/functions/v1/minimoth-otp";
+
+  const phone = document.getElementById("bc-phone");
+  const code = document.getElementById("bc-code");
+  const send = document.getElementById("bc-send");
+  const verify = document.getElementById("bc-verify");
+  const area = document.getElementById("bc-verify-area");
+  const status = document.getElementById("bc-status");
 
   let requestedPhone = "";
 
-  async function requestOtp(action, code) {
+  async function callFunction(action, otpCode) {
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "apikey": SUPABASE_PUBLIC_KEY
+        "apikey": PUBLIC_KEY
       },
       body: JSON.stringify({
-        action,
+        action: action,
         phone: requestedPhone,
-        ...(code ? { code } : {})
+        ...(otpCode ? { code: otpCode } : {})
       })
     });
 
-    const result = await response.json().catch(() => ({}));
+    const text = await response.text();
+    let data = {};
 
-    if (!response.ok) {
-      throw new Error(result.error || `Request failed (${response.status})`);
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = {};
     }
 
-    return result;
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error(
+          "401 Unauthorized. Check the Supabase publishable key, " +
+          "function authorization settings, and Edge Function logs."
+        );
+      }
+
+      throw new Error(
+        data.error || `Request failed: HTTP ${response.status}`
+      );
+    }
+
+    return data;
   }
 
-  sendButton.addEventListener("click", async () => {
-    const phone = phoneInput.value.trim();
+  send.addEventListener("click", async () => {
+    requestedPhone = phone.value.trim();
 
-    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+    if (!/^\+[1-9]\d{7,14}$/.test(requestedPhone)) {
       status.textContent =
         "Enter your full number, e.g. +919876543210.";
       return;
     }
 
-    requestedPhone = phone;
-    sendButton.disabled = true;
+    send.disabled = true;
     status.textContent = "Requesting OTP…";
 
     try {
-      await requestOtp("send");
-      verifySection.hidden = false;
+      await callFunction("send");
+      area.hidden = false;
       status.textContent =
         "OTP request accepted. Check your SMS or WhatsApp.";
     } catch (error) {
       status.textContent = error.message;
     } finally {
-      sendButton.disabled = false;
+      send.disabled = false;
     }
   });
 
-  verifyButton.addEventListener("click", async () => {
-    const code = codeInput.value.trim();
+  verify.addEventListener("click", async () => {
+    const enteredCode = code.value.trim();
 
     if (!requestedPhone) {
-      status.textContent = "Please request an OTP first.";
+      status.textContent = "Request an OTP first.";
       return;
     }
 
-    if (!/^\d{6}$/.test(code)) {
+    if (!/^\d{6}$/.test(enteredCode)) {
       status.textContent = "Enter the 6-digit OTP.";
       return;
     }
 
-    verifyButton.disabled = true;
-    status.textContent = "Verifying…";
+    verify.disabled = true;
+    status.textContent = "Verifying OTP…";
 
     try {
-      const result = await requestOtp("verify", code);
+      const result = await callFunction("verify", enteredCode);
 
       if (!result.identity_id || !result.access_token) {
         status.textContent =
-          "Provider response received, but no complete login session was returned.";
+          "Response received, but verification session details are missing.";
         return;
       }
 
-      status.textContent = "Phone verified successfully!";
+      status.textContent =
+        "Phone verified successfully for Blurancy Cartify!";
+
       window.dispatchEvent(new CustomEvent(
         "blurancy:phone-verified",
-        { detail: { phone: requestedPhone, identity_id: result.identity_id } }
+        {
+          detail: {
+            phone: requestedPhone,
+            identity_id: result.identity_id
+          }
+        }
       ));
     } catch (error) {
       status.textContent = error.message;
     } finally {
-      verifyButton.disabled = false;
+      verify.disabled = false;
     }
   });
 })();
