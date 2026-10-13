@@ -1,194 +1,373 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#172554">
+  <title>Blurancy Cartify | Online Shopping</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f5f9;
+      color: #172033;
+    }
+    header {
+      background: #172554;
+      color: white;
+      padding: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand { font-size: 22px; font-weight: bold; }
+    button, input, select {
+      font: inherit;
+      padding: 11px;
+      border-radius: 7px;
+    }
+    button {
+      border: 0;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    input, select { border: 1px solid #ccd3df; max-width: 100%; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 16px;
+      background: white;
+    }
+    .toolbar input { flex: 1; min-width: 180px; }
+    main { padding: 16px; }
+    h2 { margin-top: 8px; }
+    #productGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+      gap: 14px;
+    }
+    .product {
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      box-shadow: 0 2px 9px #0000000d;
+    }
+    .product .emoji { font-size: 48px; text-align: center; padding: 10px; }
+    .product h3 { font-size: 16px; min-height: 38px; }
+    .price { font-weight: bold; font-size: 18px; }
+    .old-price { color: #6b7280; text-decoration: line-through; font-size: 13px; }
+    .panel {
+      background: white;
+      margin: 16px;
+      padding: 18px;
+      border-radius: 12px;
+    }
+    .panel input { display: block; width: 100%; margin: 9px 0; }
+    .status { margin-top: 10px; overflow-wrap: anywhere; }
+    .muted { color: #64748b; font-size: 13px; }
+    .hidden { display: none !important; }
+    #cartItems > div {
+      display: flex; justify-content: space-between; gap: 10px;
+      align-items: center; border-bottom: 1px solid #e5e7eb; padding: 10px 0;
+    }
+    footer { text-align: center; padding: 20px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">🛒 Blurancy Cartify</div>
+    <div>
+      <button id="loginToggle">Login / OTP</button>
+      <button id="cartToggle">Cart (<span id="cartCount">0</span>)</button>
+    </div>
+  </header>
 
-<!-- Blurancy Cartify OTP Login -->
-<section id="bc-otp-login">
-  <h2>Blurancy Cartify</h2>
-  <p>Login with your mobile number</p>
+  <section class="toolbar">
+    <input id="searchInput" type="search" placeholder="Search products...">
+    <select id="categoryFilter" aria-label="Filter category">
+      <option value="all">All categories</option>
+      <option>Electronics</option>
+      <option>Fashion</option>
+      <option>Footwear</option>
+      <option>Home</option>
+      <option>Beauty</option>
+      <option>Fitness</option>
+      <option>Books</option>
+    </select>
+    <select id="sortFilter" aria-label="Sort products">
+      <option value="default">Featured</option>
+      <option value="low">Price: low to high</option>
+      <option value="high">Price: high to low</option>
+      <option value="name">Name: A to Z</option>
+    </select>
+  </section>
 
-  <label for="bc-phone">Mobile number</label>
-  <input id="bc-phone" type="tel"
-         placeholder="+919876543210" autocomplete="tel">
-  <button id="bc-send" type="button">Send OTP</button>
+  <main>
+    <h2>Shop products</h2>
+    <p id="resultText" class="muted"></p>
+    <section id="productGrid"></section>
+    <p id="emptyProducts" class="hidden">No products found.</p>
+  </main>
 
-  <div id="bc-verify-area" hidden>
-    <label for="bc-code">Enter the OTP you received</label>
-    <input id="bc-code" type="text" inputmode="numeric"
-           maxlength="6" autocomplete="one-time-code"
-           placeholder="6-digit OTP">
-    <button id="bc-verify" type="button">Verify OTP</button>
-  </div>
+  <section id="otpPanel" class="panel hidden">
+    <h2>Login with phone OTP</h2>
+    <p class="muted">Enter your Indian mobile number to request a verification code.</p>
+    <form id="sendForm">
+      <label for="phone">Mobile number</label>
+      <input id="phone" type="tel" inputmode="tel"
+        placeholder="+919876543210" autocomplete="tel" required>
+      <button id="sendButton" type="submit">Send OTP</button>
+    </form>
 
-  <p id="bc-status" role="status" aria-live="polite"></p>
-</section>
+    <form id="verifyForm" class="hidden">
+      <label for="otpCode">Enter OTP</label>
+      <input id="otpCode" type="text" inputmode="numeric"
+        autocomplete="one-time-code" placeholder="6-digit OTP"
+        pattern="[0-9]{6}" maxlength="6" required>
+      <button id="verifyButton" type="submit">Verify OTP</button>
+    </form>
+    <p id="otpStatus" class="status" role="status" aria-live="polite"></p>
+    <p class="muted">Verification requires a correctly configured Supabase Edge Function and MiniMoth service.</p>
+  </section>
 
-<style>
-  #bc-otp-login {
-    max-width: 420px;
-    margin: 30px auto;
-    padding: 24px;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    background: #fff;
-    color: #222;
-    font-family: Arial, sans-serif;
-  }
+  <section id="cartPanel" class="panel hidden">
+    <h2>Your shopping cart</h2>
+    <div id="cartItems"></div>
+    <h3>Total: ₹<span id="cartTotal">0</span></h3>
+    <button id="checkoutButton">Continue to checkout</button>
+    <p id="checkoutStatus" class="status" role="status"></p>
+  </section>
 
-  #bc-otp-login input,
-  #bc-otp-login button {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 7px;
-    font-size: 16px;
-  }
+  <footer>© <span id="year"></span> Blurancy Cartify</footer>
 
-  #bc-otp-login input {
-    border: 1px solid #bbb;
-  }
+  <script>
+    "use strict";
 
-  #bc-otp-login button {
-    border: 0;
-    background: #2874f0;
-    color: white;
-    cursor: pointer;
-  }
+    // Replace these sample products with your actual catalogue or database query.
+    const products = [
+      { id: 1, name: "Wireless Earbuds", category: "Electronics", price: 999, oldPrice: 1999, emoji: "🎧" },
+      { id: 2, name: "Smart Watch", category: "Electronics", price: 1499, oldPrice: 2999, emoji: "⌚" },
+      { id: 3, name: "Cotton T-Shirt", category: "Fashion", price: 499, oldPrice: 999, emoji: "👕" },
+      { id: 4, name: "Running Shoes", category: "Footwear", price: 1299, oldPrice: 1999, emoji: "👟" },
+      { id: 5, name: "Face Care Kit", category: "Beauty", price: 599, oldPrice: 899, emoji: "🧴" },
+      { id: 6, name: "Desk Lamp", category: "Home", price: 399, oldPrice: 699, emoji: "💡" },
+      { id: 7, name: "Yoga Mat", category: "Fitness", price: 699, oldPrice: 999, emoji: "🧘" },
+      { id: 8, name: "Study Guide", category: "Books", price: 249, oldPrice: 399, emoji: "📚" }
+    ];
 
-  #bc-otp-login button:disabled {
-    opacity: .6;
-  }
+    // Supabase project URL. The MiniMoth service key must NEVER be placed here.
+    const SUPABASE_URL = "https://avfrwtvbbytyyoxoubjd.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
+    const OTP_FUNCTION_URL = SUPABASE_URL + "/functions/v1/minimoth-otp";
 
-  #bc-status {
-    overflow-wrap: anywhere;
-  }
-</style>
+    const $ = id => document.getElementById(id);
+    let cart = {};
+    try {
+      cart = JSON.parse(localStorage.getItem("blurancy_cart") || "{}");
+      if (!cart || typeof cart !== "object" || Array.isArray(cart)) cart = {};
+    } catch {
+      cart = {};
+    }
 
-<script>
-(() => {
-  const PROJECT_URL =
-    "https://avfrwtvbbytyyoxoubjd.supabase.co";
+    function money(value) {
+      return Number(value).toLocaleString("en-IN");
+    }
 
-  // Replace with your Supabase publishable key.
-  const PUBLIC_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY";
+    function renderProducts() {
+      const search = $("searchInput").value.trim().toLowerCase();
+      const category = $("categoryFilter").value;
+      const sort = $("sortFilter").value;
 
-  const endpoint = PROJECT_URL +
-    "/functions/v1/minimoth-otp";
+      let list = products.filter(p =>
+        p.name.toLowerCase().includes(search) &&
+        (category === "all" || p.category === category)
+      );
 
-  const phone = document.getElementById("bc-phone");
-  const code = document.getElementById("bc-code");
-  const send = document.getElementById("bc-send");
-  const verify = document.getElementById("bc-verify");
-  const area = document.getElementById("bc-verify-area");
-  const status = document.getElementById("bc-status");
+      if (sort === "low") list.sort((a, b) => a.price - b.price);
+      if (sort === "high") list.sort((a, b) => b.price - a.price);
+      if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
 
-  let requestedPhone = "";
+      $("resultText").textContent = `${list.length} product(s)`;
+      $("emptyProducts").classList.toggle("hidden", list.length > 0);
+      $("productGrid").innerHTML = list.map(p => `
+        <article class="product">
+          <div class="emoji" aria-hidden="true">${p.emoji}</div>
+          <h3>${escapeHTML(p.name)}</h3>
+          <p class="muted">${escapeHTML(p.category)}</p>
+          <p><span class="price">₹${money(p.price)}</span>
+          <span class="old-price">₹${money(p.oldPrice)}</span></p>
+          <button data-add="${p.id}">Add to cart</button>
+        </article>
+      `).join("");
+    }
 
-  async function callFunction(action, otpCode) {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": PUBLIC_KEY
-      },
-      body: JSON.stringify({
-        action: action,
-        phone: requestedPhone,
-        ...(otpCode ? { code: otpCode } : {})
-      })
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        '"': "&quot;", "'": "&#39;"
+      })[c]);
+    }
+
+    function saveCart() {
+      localStorage.setItem("blurancy_cart", JSON.stringify(cart));
+      renderCart();
+    }
+
+    function renderCart() {
+      let total = 0, count = 0;
+      const entries = Object.entries(cart).filter(([id, qty]) =>
+        products.some(p => p.id === Number(id)) &&
+        Number.isInteger(qty) && qty > 0
+      );
+
+      $("cartItems").innerHTML = entries.map(([id, qty]) => {
+        const p = products.find(item => item.id === Number(id));
+        total += p.price * qty;
+        count += qty;
+        return `<div>
+          <span>${escapeHTML(p.name)} × ${qty}<br>₹${money(p.price * qty)}</span>
+          <span>
+            <button data-minus="${p.id}" aria-label="Remove one">−</button>
+            <button data-plus="${p.id}" aria-label="Add one">+</button>
+          </span>
+        </div>`;
+      }).join("");
+
+      $("cartCount").textContent = count;
+      $("cartTotal").textContent = money(total);
+    }
+
+    $("productGrid").addEventListener("click", event => {
+      const button = event.target.closest("[data-add]");
+      if (!button) return;
+      const id = button.dataset.add;
+      cart[id] = (Number(cart[id]) || 0) + 1;
+      saveCart();
+      button.textContent = "Added!";
+      setTimeout(() => { button.textContent = "Add to cart"; }, 800);
     });
 
-    const text = await response.text();
-    let data = {};
+    $("cartItems").addEventListener("click", event => {
+      const plus = event.target.closest("[data-plus]");
+      const minus = event.target.closest("[data-minus]");
+      if (plus) {
+        const id = plus.dataset.plus;
+        cart[id] = (Number(cart[id]) || 0) + 1;
+      }
+      if (minus) {
+        const id = minus.dataset.minus;
+        cart[id] = (Number(cart[id]) || 0) - 1;
+        if (cart[id] <= 0) delete cart[id];
+      }
+      saveCart();
+    });
 
-    try {
-      data = text ? JSON.parse(text) : {};
-    } catch {
-      data = {};
+    ["searchInput", "categoryFilter", "sortFilter"].forEach(id => {
+      $(id).addEventListener(id === "searchInput" ? "input" : "change", renderProducts);
+    });
+
+    $("loginToggle").addEventListener("click", () => {
+      $("otpPanel").classList.toggle("hidden");
+    });
+    $("cartToggle").addEventListener("click", () => {
+      $("cartPanel").classList.toggle("hidden");
+    });
+
+    function normalizeIndianPhone(value) {
+      const digits = value.replace(/\D/g, "");
+      if (/^[6-9]\d{9}$/.test(digits)) return "+91" + digits;
+      if (/^91[6-9]\d{9}$/.test(digits)) return "+" + digits;
+      if (/^\+91[6-9]\d{9}$/.test(value.trim())) return value.trim();
+      throw new Error("Enter a valid 10-digit Indian mobile number.");
     }
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error(
-          "401 Unauthorized. Check the Supabase publishable key, " +
-          "function authorization settings, and Edge Function logs."
-        );
+    async function callOtpFunction(payload) {
+      if (!SUPABASE_PUBLISHABLE_KEY ||
+          SUPABASE_PUBLISHABLE_KEY === "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE") {
+        throw new Error("Add your Supabase publishable key in the HTML first.");
       }
 
-      throw new Error(
-        data.error || `Request failed: HTTP ${response.status}`
-      );
-    }
+      const response = await fetch(OTP_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY
+        },
+        body: JSON.stringify(payload)
+      });
 
-    return data;
-  }
+      const text = await response.text();
+      let result;
+      try { result = text ? JSON.parse(text) : {}; }
+      catch { result = { message: text }; }
 
-  send.addEventListener("click", async () => {
-    requestedPhone = phone.value.trim();
-
-    if (!/^\+[1-9]\d{7,14}$/.test(requestedPhone)) {
-      status.textContent =
-        "Enter your full number, e.g. +919876543210.";
-      return;
-    }
-
-    send.disabled = true;
-    status.textContent = "Requesting OTP…";
-
-    try {
-      await callFunction("send");
-      area.hidden = false;
-      status.textContent =
-        "OTP request accepted. Check your SMS or WhatsApp.";
-    } catch (error) {
-      status.textContent = error.message;
-    } finally {
-      send.disabled = false;
-    }
-  });
-
-  verify.addEventListener("click", async () => {
-    const enteredCode = code.value.trim();
-
-    if (!requestedPhone) {
-      status.textContent = "Request an OTP first.";
-      return;
-    }
-
-    if (!/^\d{6}$/.test(enteredCode)) {
-      status.textContent = "Enter the 6-digit OTP.";
-      return;
-    }
-
-    verify.disabled = true;
-    status.textContent = "Verifying OTP…";
-
-    try {
-      const result = await callFunction("verify", enteredCode);
-
-      if (!result.identity_id || !result.access_token) {
-        status.textContent =
-          "Response received, but verification session details are missing.";
-        return;
-      }
-
-      status.textContent =
-        "Phone verified successfully for Blurancy Cartify!";
-
-      window.dispatchEvent(new CustomEvent(
-        "blurancy:phone-verified",
-        {
-          detail: {
-            phone: requestedPhone,
-            identity_id: result.identity_id
-          }
+      if (!response.ok) {
+        // Do not display server internals or secrets to the customer.
+        console.error("OTP function failed:", response.status, result);
+        if (response.status === 401) {
+          throw new Error("Authorization failed. Check Supabase function access and MiniMoth credentials.");
         }
-      ));
-    } catch (error) {
-      status.textContent = error.message;
-    } finally {
-      verify.disabled = false;
+        throw new Error(result.error || result.message || `OTP request failed (${response.status}).`);
+      }
+      return result;
     }
-  });
-})();
-</script>
-<!-- End Blurancy Cartify OTP Login -->
+
+    $("sendForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = $("sendButton");
+      button.disabled = true;
+      $("otpStatus").textContent = "Sending OTP...";
+      try {
+        const phone = normalizeIndianPhone($("phone").value);
+        $("phone").value = phone;
+        await callOtpFunction({ action: "send", phone });
+        $("verifyForm").classList.remove("hidden");
+        $("otpStatus").textContent = "OTP request accepted. Check your messages.";
+      } catch (error) {
+        $("otpStatus").textContent = error.message || "Could not send OTP.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    $("verifyForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = $("verifyButton");
+      button.disabled = true;
+      $("otpStatus").textContent = "Verifying OTP...";
+      try {
+        const phone = normalizeIndianPhone($("phone").value);
+        const code = $("otpCode").value.trim();
+        if (!/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit OTP.");
+        const result = await callOtpFunction({ action: "verify", phone, code });
+        if (result.verified === false || result.success === false) {
+          throw new Error("The OTP was not verified. Check the code and try again.");
+        }
+        $("otpStatus").textContent = "OTP verification succeeded.";
+        $("verifyForm").classList.add("hidden");
+      } catch (error) {
+        $("otpStatus").textContent = error.message || "OTP verification failed.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    $("checkoutButton").addEventListener("click", () => {
+      $("checkoutStatus").textContent =
+        "Cart ready. Connect a secure checkout backend before accepting real payments.";
+    });
+
+    $("year").textContent = new Date().getFullYear();
+    renderProducts();
+    renderCart();
+  </script>
+</body>
+</html>
+```
