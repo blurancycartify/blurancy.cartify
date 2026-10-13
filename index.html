@@ -1,337 +1,333 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#172554">
-  <meta name="description" content="Shop electronics, fashion, home essentials and more at Blurancy Cartify.">
-  <title>Blurancy Cartify — Online Shopping</title>
-
-  <link rel="stylesheet" href="assets/style.css">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blurancy Cartify OTP Verification & Login</title>
   <style>
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #172033;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
-    header {
-      padding: 16px;
-      background: #172554;
-      color: white;
-    }
-
-    .header-inner {
-      max-width: 1100px;
-      margin: auto;
+    body {
+      background-color: #f4f6f9;
       display: flex;
+      justify-content: center;
       align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
+      min-height: 100vh;
     }
 
-    .brand {
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    .brand span { color: #93c5fd; }
-
-    #searchForm {
-      display: flex;
-      flex: 1;
-      min-width: 200px;
-      max-width: 480px;
-      gap: 8px;
-    }
-
-    input, select, button {
-      font: inherit;
-      padding: 11px;
-      border-radius: 7px;
-    }
-
-    input, select {
-      border: 1px solid #cbd5e1;
-    }
-
-    #searchInput {
-      width: 100%;
-      min-width: 0;
-    }
-
-    button {
-      cursor: pointer;
-      border: 0;
-      background: #2563eb;
-      color: white;
-    }
-
-    button:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
-    main {
-      max-width: 1100px;
-      margin: auto;
-      padding: 20px 16px;
-    }
-
-    .hero {
-      padding: 28px 22px;
-      background: #dbeafe;
-      border-radius: 14px;
-      margin-bottom: 22px;
-    }
-
-    .hero h1 { margin-top: 0; }
-
-    .section {
-      background: white;
-      border: 1px solid #e2e8f0;
+    .card {
+      background: #ffffff;
+      padding: 2.5rem;
       border-radius: 12px;
-      padding: 18px;
-      margin: 20px 0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 420px;
     }
 
-    #productGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 16px;
+    .card h2 {
+      color: #1a1a1a;
+      margin-bottom: 0.5rem;
+      font-size: 1.5rem;
     }
 
-    #productGrid article {
-      padding: 14px;
-      border-radius: 10px;
-      background: white;
-      border: 1px solid #e2e8f0;
-      overflow-wrap: anywhere;
+    .card p {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
     }
 
-    #productGrid img {
-      max-width: 100%;
-      height: 160px;
-      object-fit: contain;
+    .form-group {
+      margin-bottom: 1.25rem;
     }
 
-    .login-row {
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    input[type="tel"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1.5px solid #dcdfe6;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="tel"]:focus {
+      border-color: #2563eb;
+    }
+
+    .otp-group {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
     }
 
-    .login-row input {
-      flex: 1;
-      min-width: 180px;
-    }
-
-    #mm-status {
-      min-height: 24px;
-      overflow-wrap: anywhere;
-    }
-
-    footer {
+    .otp-input {
+      width: 48px;
+      height: 52px;
       text-align: center;
-      padding: 24px;
-      color: #64748b;
+      font-size: 1.25rem;
+      font-weight: 600;
+      border: 1.5px solid #dcdfe6;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    [hidden] { display: none !important; }
+    .otp-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.85rem;
+      background-color: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn:disabled {
+      background-color: #a5b4fc;
+      cursor: not-allowed;
+    }
+
+    .resend-box {
+      margin-top: 1.25rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .resend-btn {
+      color: #2563eb;
+      background: none;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .resend-btn:disabled {
+      color: #999;
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .status-msg {
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      text-align: center;
+    }
+    .status-msg.error { color: #dc2626; }
+    .status-msg.success { color: #16a34a; }
   </style>
 </head>
-
 <body>
-  <header>
-    <div class="header-inner">
-      <div class="brand">🛒 Blurancy <span>Cartify</span></div>
 
-      <form id="searchForm">
-        <input id="searchInput" type="search"
-          placeholder="Search products..."
-          aria-label="Search products">
-        <button type="submit">Search</button>
+  <div class="card">
+    
+    <!-- STEP 1: Phone Number Entry -->
+    <div id="step-phone">
+      <h2>Blurancy Cartify Login</h2>
+      <p>Enter your mobile number to receive your Blurancy Cartify verification code.</p>
+      
+      <form id="phone-form">
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" placeholder="+1 234 567 8900" required autocomplete="tel" />
+        </div>
+        <button type="submit" id="send-otp-btn" class="btn">Send Verification Code</button>
       </form>
-
-      <button id="loginBtn" type="button"
-        onclick="document.getElementById('minimoth-login').scrollIntoView({behavior:'smooth'})">
-        Login
-      </button>
-
-      <button id="cartBtn" type="button">
-        🛒 Cart (<span id="cartCount">0</span>)
-      </button>
     </div>
-  </header>
 
-  <main>
-    <section class="hero">
-      <h1>Welcome to Blurancy Cartify</h1>
-      <p>Discover electronics, fashion, home essentials and more.</p>
-      <p>Find your next favourite product today.</p>
-    </section>
-
-    <section class="section" aria-labelledby="productsHeading">
-      <h2 id="productsHeading">Our Products</h2>
-      <p id="productResultText" aria-live="polite">
-        Loading products...
-      </p>
-      <div id="productGrid"></div>
-      <p id="noProducts" hidden>
-        No products found. Please try another search.
-      </p>
-    </section>
-
-    <section class="section" id="cartPanel" hidden>
-      <h2>Your Cart</h2>
-      <div id="cartItems"></div>
-      <p id="cartMessage">Your cart is empty.</p>
-      <button id="clearCartBtn" type="button">Clear Cart</button>
-    </section>
-
-    <section class="section" id="minimoth-login">
-      <h2>Login with Phone OTP</h2>
-      <p>Enter your Indian mobile number to request an OTP.</p>
-
-      <form id="mm-send-form">
-        <div class="login-row">
-          <input id="mm-phone" type="tel"
-            inputmode="tel" autocomplete="tel"
-            maxlength="13" placeholder="9876543210"
-            aria-label="Indian mobile number" required>
-          <button id="mm-send" type="submit">Send OTP</button>
+    <!-- STEP 2: OTP Verification -->
+    <div id="step-otp" class="hidden">
+      <h2>Blurancy Cartify Verification</h2>
+      <p>We sent a 6-digit code to <strong id="user-phone-display">+1 *** *** ****</strong></p>
+      
+      <form id="otp-form">
+        <div class="otp-group">
+          <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required />
+          <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]*" required />
+          <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]*" required />
+          <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]*" required />
+          <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]*" required />
+          <input type="text" maxlength="1" class="otp-input" inputmode="numeric" pattern="[0-9]*" required />
         </div>
+
+        <button type="submit" id="verify-btn" class="btn">Verify & Access Cartify</button>
       </form>
 
-      <form id="mm-verify-form" hidden>
-        <p>Enter the six-digit OTP you received.</p>
-        <div class="login-row">
-          <input id="mm-code" type="text"
-            inputmode="numeric" autocomplete="one-time-code"
-            maxlength="6" pattern="[0-9]{6}"
-            placeholder="6-digit OTP"
-            aria-label="One-time password" required>
-          <button id="mm-verify" type="submit">Verify OTP</button>
-        </div>
-      </form>
+      <div class="resend-box">
+        Didn't receive code? 
+        <button id="resend-btn" class="resend-btn" disabled>Resend in <span id="timer">60</span>s</button>
+      </div>
+    </div>
 
-      <p id="mm-status" role="status" aria-live="polite"></p>
-    </section>
-  </main>
-
-  <footer>
-    © <span id="year"></span> Blurancy Cartify. All rights reserved.
-  </footer>
+    <div id="status-msg" class="status-msg"></div>
+  </div>
 
   <script>
-    document.getElementById("year").textContent =
-      new Date().getFullYear();
-  </script>
+    const stepPhone = document.getElementById('step-phone');
+    const stepOtp = document.getElementById('step-otp');
+    const phoneForm = document.getElementById('phone-form');
+    const otpForm = document.getElementById('otp-form');
+    const phoneInput = document.getElementById('phone');
+    const userPhoneDisplay = document.getElementById('user-phone-display');
+    const otpInputs = document.querySelectorAll('.otp-input');
+    const resendBtn = document.getElementById('resend-btn');
+    const timerSpan = document.getElementById('timer');
+    const statusMsg = document.getElementById('status-msg');
 
-  <script>
-    // OTP requests go through the Supabase Edge Function.
-    // Never put your MiniMoth API key or Supabase secret key here.
-    const SUPABASE_PUBLIC_KEY = "PASTE_YOUR_LEGACY_ANON_KEY_HERE";
+    let countdownTimer = null;
+    let secondsLeft = 60;
+    let currentPhoneNumber = "";
 
-    const OTP_FUNCTION_URL =
-      "https://avfrwtvbbytyyoxoubjd.supabase.co/functions/v1/minimoth-otp";
+    // 1. Handle Phone Submission
+    phoneForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      currentPhoneNumber = phoneInput.value.trim();
 
-    const sendForm = document.getElementById("mm-send-form");
-    const verifyForm = document.getElementById("mm-verify-form");
-    const phoneInput = document.getElementById("mm-phone");
-    const codeInput = document.getElementById("mm-code");
-    const status = document.getElementById("mm-status");
+      if (!currentPhoneNumber) return;
 
-    function getPhoneNumber() {
-      let phone = phoneInput.value.trim().replace(/\s/g, "");
+      showStatus("Sending Blurancy Cartify OTP...", "success");
 
-      if (/^[6-9]\d{9}$/.test(phone)) {
-        phone = "+91" + phone;
+      try {
+        const response = await fetch('/api/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber: currentPhoneNumber })
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message || "Failed to send OTP");
+
+        showStatus("", "");
+        userPhoneDisplay.textContent = currentPhoneNumber;
+        stepPhone.classList.add('hidden');
+        stepOtp.classList.remove('hidden');
+        otpInputs[0].focus();
+
+        startResendTimer();
+      } catch (err) {
+        showStatus(err.message || "Failed to connect to server", "error");
       }
+    });
 
-      if (!/^\+91[6-9]\d{9}$/.test(phone)) {
-        throw new Error("Enter a valid Indian mobile number.");
-      }
+    // 2. OTP Input Auto-Focus & Navigation
+    otpInputs.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        e.target.value = val;
 
-      return phone;
-    }
-
-    async function callOtp(action, extra = {}) {
-      if (SUPABASE_PUBLIC_KEY.includes("PASTE_YOUR")) {
-        throw new Error(
-          "Supabase key is not configured in index.html."
-        );
-      }
-
-      const response = await fetch(OTP_FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_PUBLIC_KEY,
-          "Authorization": "Bearer " + SUPABASE_PUBLIC_KEY
-        },
-        body: JSON.stringify({
-          action: action,
-          phone: getPhoneNumber(),
-          ...extra
-        })
+        if (val && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
       });
 
-      const result = await response.json().catch(() => ({}));
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          otpInputs[index - 1].focus();
+        }
+      });
 
-      if (!response.ok || !result.ok) {
-        throw new Error(
-          result.error || "OTP request failed (HTTP " +
-          response.status + ")."
-        );
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').trim();
+        if (/^\d{6}\$/.test(pastedData)) {
+          pastedData.split('').forEach((char, i) => {
+            if (otpInputs[i]) otpInputs[i].value = char;
+          });
+          otpInputs[5].focus();
+        }
+      });
+    });
+
+    // 3. Handle OTP Code Verification Submission
+    otpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const otpCode = Array.from(otpInputs).map(i => i.value).join('');
+
+      if (otpCode.length !== 6) {
+        showStatus("Please enter full 6-digit code.", "error");
+        return;
       }
 
-      return result;
+      showStatus("Verifying code...", "success");
+
+      try {
+        const response = await fetch('/api/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber: currentPhoneNumber, code: otpCode })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          localStorage.setItem('authToken', data.token); 
+          window.location.href = '/dashboard.html'; 
+        } else {
+          throw new Error(data.message || "Invalid verification code");
+        }
+      } catch (err) {
+        showStatus(err.message || "Invalid OTP code. Try again.", "error");
+      }
+    });
+
+    // 4. Timer Logic
+    function startResendTimer() {
+      secondsLeft = 60;
+      resendBtn.disabled = true;
+      timerSpan.textContent = secondsLeft;
+
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        secondsLeft--;
+        timerSpan.textContent = secondsLeft;
+
+        if (secondsLeft <= 0) {
+          clearInterval(countdownTimer);
+          resendBtn.disabled = false;
+          resendBtn.innerHTML = "Resend Code";
+        }
+      }, 1000);
     }
 
-    sendForm.addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      const button = document.getElementById("mm-send");
-      button.disabled = true;
-      status.textContent = "Requesting OTP...";
-
-      try {
-        await callOtp("send");
-        verifyForm.hidden = false;
-        status.textContent =
-          "OTP request accepted. Check the configured delivery channel.";
-      } catch (error) {
-        status.textContent = error.message;
-      } finally {
-        button.disabled = false;
-      }
+    resendBtn.addEventListener('click', () => {
+      if (resendBtn.disabled) return;
+      phoneForm.dispatchEvent(new Event('submit'));
     });
 
-    verifyForm.addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      const button = document.getElementById("mm-verify");
-      button.disabled = true;
-      status.textContent = "Verifying OTP...";
-
-      try {
-        await callOtp("verify", { code: codeInput.value.trim() });
-        status.textContent =
-          "Phone verified. A full account login session must still be connected.";
-      } catch (error) {
-        status.textContent = error.message;
-      } finally {
-        button.disabled = false;
-      }
-    });
+    function showStatus(msg, type) {
+      statusMsg.textContent = msg;
+      statusMsg.className = `status-msg ${type}`;
+    }
   </script>
-
-  <!-- Keep your existing product JavaScript file. -->
-  <script src="assets/app.js"></script>
 </body>
 </html>
