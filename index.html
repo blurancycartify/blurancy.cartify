@@ -1,373 +1,677 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#172554">
+  <meta name="theme-color" content="#111827">
   <title>Blurancy Cartify | Online Shopping</title>
+  <meta name="description" content="Shop electronics, fashion, home products and more at Blurancy Cartify.">
+
   <style>
+    :root {
+      --primary: #2563eb;
+      --dark: #111827;
+      --muted: #6b7280;
+      --bg: #f3f4f6;
+      --white: #ffffff;
+      --border: #e5e7eb;
+    }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f5f9;
-      color: #172033;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
     }
-    header {
-      background: #172554;
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .topbar {
+      background: var(--dark);
       color: white;
-      padding: 18px;
+      padding: 12px 5%;
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-    }
-    .brand { font-size: 22px; font-weight: bold; }
-    button, input, select {
-      font: inherit;
-      padding: 11px;
-      border-radius: 7px;
-    }
-    button {
-      border: 0;
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .6; cursor: wait; }
-    input, select { border: 1px solid #ccd3df; max-width: 100%; }
-    .toolbar {
-      display: flex;
-      gap: 10px;
       flex-wrap: wrap;
-      padding: 16px;
-      background: white;
     }
-    .toolbar input { flex: 1; min-width: 180px; }
-    main { padding: 16px; }
-    h2 { margin-top: 8px; }
-    #productGrid {
+    .brand { font-size: 23px; font-weight: 800; }
+    .brand span { color: #60a5fa; }
+    .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      padding: 10px 14px;
+      font-weight: 700;
+    }
+    .btn.secondary { background: #374151; }
+    .btn.light { background: #e5edff; color: #1d4ed8; }
+    .hero {
+      padding: 36px 5%;
+      background: linear-gradient(120deg, #172554, #2563eb);
+      color: white;
+    }
+    .hero h1 { font-size: clamp(28px, 5vw, 44px); margin: 0 0 10px; }
+    .hero p { margin: 0; color: #dbeafe; }
+    main { max-width: 1250px; padding: 24px 16px; margin: auto; }
+    .toolbar {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-      gap: 14px;
+      grid-template-columns: minmax(180px, 2fr) minmax(140px, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      color: #111827;
+    }
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .section-heading h2 { margin: 0; }
+    .muted { color: var(--muted); font-size: 14px; }
+    .products {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
     }
     .product {
       background: white;
-      padding: 14px;
+      border: 1px solid var(--border);
       border-radius: 12px;
-      box-shadow: 0 2px 9px #0000000d;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .product .emoji { font-size: 48px; text-align: center; padding: 10px; }
-    .product h3 { font-size: 16px; min-height: 38px; }
-    .price { font-weight: bold; font-size: 18px; }
-    .old-price { color: #6b7280; text-decoration: line-through; font-size: 13px; }
+    .product img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: #e5e7eb;
+    }
+    .product-info {
+      padding: 13px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 8px;
+    }
+    .category { color: var(--muted); font-size: 12px; }
+    .product h3 { margin: 0; font-size: 16px; }
+    .price { font-size: 19px; font-weight: 800; }
+    .old-price {
+      color: #9ca3af;
+      text-decoration: line-through;
+      font-size: 13px;
+      margin-left: 5px;
+    }
+    .product .btn { margin-top: auto; }
     .panel {
       background: white;
-      margin: 16px;
-      padding: 18px;
+      border: 1px solid var(--border);
       border-radius: 12px;
+      padding: 18px;
+      margin-top: 24px;
     }
-    .panel input { display: block; width: 100%; margin: 9px 0; }
-    .status { margin-top: 10px; overflow-wrap: anywhere; }
-    .muted { color: #64748b; font-size: 13px; }
-    .hidden { display: none !important; }
-    #cartItems > div {
-      display: flex; justify-content: space-between; gap: 10px;
-      align-items: center; border-bottom: 1px solid #e5e7eb; padding: 10px 0;
+    .cart-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
     }
-    footer { text-align: center; padding: 20px; color: #64748b; }
+    .qty { display: flex; align-items: center; gap: 8px; }
+    .qty button {
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 5px;
+      padding: 5px 10px;
+    }
+    .total {
+      font-size: 21px;
+      font-weight: 800;
+      margin: 18px 0;
+    }
+    .auth-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+    .auth-card {
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 10px;
+    }
+    .auth-card h3 { margin-top: 0; }
+    .field { margin: 12px 0; }
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .status {
+      min-height: 20px;
+      overflow-wrap: anywhere;
+      font-size: 14px;
+      margin: 10px 0 0;
+    }
+    .success { color: #15803d; }
+    .error { color: #b91c1c; }
+    footer {
+      background: var(--dark);
+      color: #d1d5db;
+      text-align: center;
+      padding: 24px 12px;
+      margin-top: 32px;
+      font-size: 14px;
+    }
+    [hidden] { display: none !important; }
+
+    @media (max-width: 900px) {
+      .products { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px) {
+      .products { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .product img { height: 140px; }
+      .product-info { padding: 10px; }
+      .product h3 { font-size: 14px; }
+      .price { font-size: 17px; }
+      .auth-grid { grid-template-columns: 1fr; }
+      .toolbar { grid-template-columns: 1fr; }
+      .cart-row { grid-template-columns: 1fr auto; }
+      .cart-row .qty { grid-column: 1 / -1; }
+    }
   </style>
 </head>
+
 <body>
-  <header>
-    <div class="brand">🛒 Blurancy Cartify</div>
-    <div>
-      <button id="loginToggle">Login / OTP</button>
-      <button id="cartToggle">Cart (<span id="cartCount">0</span>)</button>
+  <header class="topbar">
+    <div class="brand">Blurancy <span>Cartify</span></div>
+    <div class="top-actions">
+      <button class="btn secondary" id="accountButton" type="button">Login / Account</button>
+      <button class="btn" id="cartButton" type="button">Cart (<span id="cartCount">0</span>)</button>
     </div>
   </header>
 
-  <section class="toolbar">
-    <input id="searchInput" type="search" placeholder="Search products...">
-    <select id="categoryFilter" aria-label="Filter category">
-      <option value="all">All categories</option>
-      <option>Electronics</option>
-      <option>Fashion</option>
-      <option>Footwear</option>
-      <option>Home</option>
-      <option>Beauty</option>
-      <option>Fitness</option>
-      <option>Books</option>
-    </select>
-    <select id="sortFilter" aria-label="Sort products">
-      <option value="default">Featured</option>
-      <option value="low">Price: low to high</option>
-      <option value="high">Price: high to low</option>
-      <option value="name">Name: A to Z</option>
-    </select>
+  <section class="hero">
+    <h1>Discover. Shop. Enjoy.</h1>
+    <p>Find products for your everyday life at Blurancy Cartify.</p>
   </section>
 
   <main>
-    <h2>Shop products</h2>
-    <p id="resultText" class="muted"></p>
-    <section id="productGrid"></section>
-    <p id="emptyProducts" class="hidden">No products found.</p>
+    <section aria-label="Product search">
+      <div class="toolbar">
+        <input id="searchInput" type="search" placeholder="Search products..." aria-label="Search products">
+        <select id="categorySelect" aria-label="Choose category">
+          <option value="All">All categories</option>
+          <option>Electronics</option>
+          <option>Fashion</option>
+          <option>Footwear</option>
+          <option>Home</option>
+          <option>Beauty</option>
+          <option>Fitness</option>
+          <option>Books</option>
+          <option>Accessories</option>
+        </select>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading">
+        <h2>Featured Products</h2>
+        <span class="muted" id="resultCount"></span>
+      </div>
+      <div class="products" id="productGrid"></div>
+      <p id="noProducts" hidden>No products found. Try another search.</p>
+    </section>
+
+    <section class="panel" id="cartSection">
+      <div class="section-heading">
+        <h2>Your Shopping Cart</h2>
+        <button class="btn light" id="clearCart" type="button">Clear cart</button>
+      </div>
+      <div id="cartItems"></div>
+      <div class="total">Total: <span id="cartTotal">₹0.00</span></div>
+      <button class="btn" id="checkoutButton" type="button">Continue to Checkout</button>
+      <p class="muted">Online payment is not connected in this version.</p>
+      <p id="checkoutStatus" class="status" role="status"></p>
+    </section>
+
+    <section class="panel" id="accountSection">
+      <div class="section-heading">
+        <h2>Login or Create Account</h2>
+        <button class="btn light" id="closeAccount" type="button">Hide</button>
+      </div>
+      <p class="muted">
+        Sign in with your mobile number or email. Phone OTP requires working
+        SMS delivery configured in Supabase.
+      </p>
+
+      <div id="signedInPanel" hidden>
+        <p id="signedInText"></p>
+        <button class="btn secondary" id="signOutButton" type="button">Sign out</button>
+      </div>
+
+      <div class="auth-grid" id="authForms">
+        <div class="auth-card">
+          <h3>Phone OTP</h3>
+          <div class="field">
+            <label for="phoneInput">Indian mobile number</label>
+            <input id="phoneInput" type="tel" autocomplete="tel" placeholder="+919876543210">
+          </div>
+          <button class="btn" id="sendPhoneOtp" type="button">Send OTP</button>
+
+          <div id="phoneCodeArea" hidden>
+            <div class="field">
+              <label for="phoneCode">6-digit SMS code</label>
+              <input id="phoneCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter OTP">
+            </div>
+            <button class="btn" id="verifyPhoneOtp" type="button">Verify Phone OTP</button>
+          </div>
+          <p class="status" id="phoneStatus" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="auth-card">
+          <h3>Email OTP</h3>
+          <div class="field">
+            <label for="emailInput">Email address</label>
+            <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com">
+          </div>
+          <button class="btn" id="sendEmailOtp" type="button">Send Email Code</button>
+
+          <div id="emailCodeArea" hidden>
+            <div class="field">
+              <label for="emailCode">Email verification code</label>
+              <input id="emailCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code">
+            </div>
+            <button class="btn" id="verifyEmailOtp" type="button">Verify Email Code</button>
+          </div>
+          <p class="status" id="emailStatus" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <section id="otpPanel" class="panel hidden">
-    <h2>Login with phone OTP</h2>
-    <p class="muted">Enter your Indian mobile number to request a verification code.</p>
-    <form id="sendForm">
-      <label for="phone">Mobile number</label>
-      <input id="phone" type="tel" inputmode="tel"
-        placeholder="+919876543210" autocomplete="tel" required>
-      <button id="sendButton" type="submit">Send OTP</button>
-    </form>
+  <footer>
+    <p><strong>Blurancy Cartify</strong></p>
+    <p>Online shopping made simple.</p>
+    <p>Product images are illustrative. Product availability and prices must be confirmed before launch.</p>
+  </footer>
 
-    <form id="verifyForm" class="hidden">
-      <label for="otpCode">Enter OTP</label>
-      <input id="otpCode" type="text" inputmode="numeric"
-        autocomplete="one-time-code" placeholder="6-digit OTP"
-        pattern="[0-9]{6}" maxlength="6" required>
-      <button id="verifyButton" type="submit">Verify OTP</button>
-    </form>
-    <p id="otpStatus" class="status" role="status" aria-live="polite"></p>
-    <p class="muted">Verification requires a correctly configured Supabase Edge Function and MiniMoth service.</p>
-  </section>
-
-  <section id="cartPanel" class="panel hidden">
-    <h2>Your shopping cart</h2>
-    <div id="cartItems"></div>
-    <h3>Total: ₹<span id="cartTotal">0</span></h3>
-    <button id="checkoutButton">Continue to checkout</button>
-    <p id="checkoutStatus" class="status" role="status"></p>
-  </section>
-
-  <footer>© <span id="year"></span> Blurancy Cartify</footer>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+  (() => {
     "use strict";
 
-    // Replace these sample products with your actual catalogue or database query.
+    // Your Supabase project and publishable key.
+    const SUPABASE_URL = "https://avfrwtvbbytyyoxoubjd.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY =
+      "sb_publishable_XW68RVEL3u7sRrHiZ0PoFQ_gTmfvncj";
+
+    if (!window.supabase) {
+      alert("Supabase library could not load. Check your internet connection.");
+      return;
+    }
+
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    // Sample catalogue for the standalone page.
+    // Replace these examples with your real Supabase product catalogue.
     const products = [
       { id: 1, name: "Wireless Earbuds", category: "Electronics", price: 999, oldPrice: 1999, emoji: "🎧" },
       { id: 2, name: "Smart Watch", category: "Electronics", price: 1499, oldPrice: 2999, emoji: "⌚" },
       { id: 3, name: "Cotton T-Shirt", category: "Fashion", price: 499, oldPrice: 999, emoji: "👕" },
       { id: 4, name: "Running Shoes", category: "Footwear", price: 1299, oldPrice: 1999, emoji: "👟" },
-      { id: 5, name: "Face Care Kit", category: "Beauty", price: 599, oldPrice: 899, emoji: "🧴" },
-      { id: 6, name: "Desk Lamp", category: "Home", price: 399, oldPrice: 699, emoji: "💡" },
-      { id: 7, name: "Yoga Mat", category: "Fitness", price: 699, oldPrice: 999, emoji: "🧘" },
-      { id: 8, name: "Study Guide", category: "Books", price: 249, oldPrice: 399, emoji: "📚" }
+      { id: 5, name: "Travel Backpack", category: "Accessories", price: 899, oldPrice: 1499, emoji: "🎒" },
+      { id: 6, name: "Desk Lamp", category: "Home", price: 599, oldPrice: 899, emoji: "💡" },
+      { id: 7, name: "Face Care Set", category: "Beauty", price: 699, oldPrice: 999, emoji: "🧴" },
+      { id: 8, name: "Yoga Mat", category: "Fitness", price: 549, oldPrice: 799, emoji: "🧘" },
+      { id: 9, name: "Study Notebook Set", category: "Books", price: 249, oldPrice: 399, emoji: "📚" },
+      { id: 10, name: "Bluetooth Speaker", category: "Electronics", price: 1199, oldPrice: 1799, emoji: "🔊" },
+      { id: 11, name: "Casual Handbag", category: "Fashion", price: 799, oldPrice: 1299, emoji: "👜" },
+      { id: 12, name: "Water Bottle", category: "Fitness", price: 299, oldPrice: 499, emoji: "🥤" }
     ];
 
-    // Supabase project URL. The MiniMoth service key must NEVER be placed here.
-    const SUPABASE_URL = "https://avfrwtvbbytyyoxoubjd.supabase.co";
-    const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
-    const OTP_FUNCTION_URL = SUPABASE_URL + "/functions/v1/minimoth-otp";
+    const money = value => new Intl.NumberFormat("en-IN", {
+      style: "currency", currency: "INR", maximumFractionDigits: 2
+    }).format(value);
 
-    const $ = id => document.getElementById(id);
+    const byId = id => document.getElementById(id);
+    const productGrid = byId("productGrid");
+    const cartItems = byId("cartItems");
+
     let cart = {};
     try {
-      cart = JSON.parse(localStorage.getItem("blurancy_cart") || "{}");
+      cart = JSON.parse(localStorage.getItem("blurancy_cart_v2") || "{}");
       if (!cart || typeof cart !== "object" || Array.isArray(cart)) cart = {};
     } catch {
       cart = {};
     }
 
-    function money(value) {
-      return Number(value).toLocaleString("en-IN");
+    let pendingPhone = "";
+    let pendingEmail = "";
+
+    function setStatus(id, text, success = false) {
+      const el = byId(id);
+      el.textContent = text;
+      el.className = "status " + (success ? "success" : "error");
     }
-
-    function renderProducts() {
-      const search = $("searchInput").value.trim().toLowerCase();
-      const category = $("categoryFilter").value;
-      const sort = $("sortFilter").value;
-
-      let list = products.filter(p =>
-        p.name.toLowerCase().includes(search) &&
-        (category === "all" || p.category === category)
-      );
-
-      if (sort === "low") list.sort((a, b) => a.price - b.price);
-      if (sort === "high") list.sort((a, b) => b.price - a.price);
-      if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
-
-      $("resultText").textContent = `${list.length} product(s)`;
-      $("emptyProducts").classList.toggle("hidden", list.length > 0);
-      $("productGrid").innerHTML = list.map(p => `
-        <article class="product">
-          <div class="emoji" aria-hidden="true">${p.emoji}</div>
-          <h3>${escapeHTML(p.name)}</h3>
-          <p class="muted">${escapeHTML(p.category)}</p>
-          <p><span class="price">₹${money(p.price)}</span>
-          <span class="old-price">₹${money(p.oldPrice)}</span></p>
-          <button data-add="${p.id}">Add to cart</button>
-        </article>
-      `).join("");
-    }
-
-    function escapeHTML(value) {
-      return String(value).replace(/[&<>"']/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;",
-        '"': "&quot;", "'": "&#39;"
-      })[c]);
-    }
-
-    function saveCart() {
-      localStorage.setItem("blurancy_cart", JSON.stringify(cart));
-      renderCart();
-    }
-
-    function renderCart() {
-      let total = 0, count = 0;
-      const entries = Object.entries(cart).filter(([id, qty]) =>
-        products.some(p => p.id === Number(id)) &&
-        Number.isInteger(qty) && qty > 0
-      );
-
-      $("cartItems").innerHTML = entries.map(([id, qty]) => {
-        const p = products.find(item => item.id === Number(id));
-        total += p.price * qty;
-        count += qty;
-        return `<div>
-          <span>${escapeHTML(p.name)} × ${qty}<br>₹${money(p.price * qty)}</span>
-          <span>
-            <button data-minus="${p.id}" aria-label="Remove one">−</button>
-            <button data-plus="${p.id}" aria-label="Add one">+</button>
-          </span>
-        </div>`;
-      }).join("");
-
-      $("cartCount").textContent = count;
-      $("cartTotal").textContent = money(total);
-    }
-
-    $("productGrid").addEventListener("click", event => {
-      const button = event.target.closest("[data-add]");
-      if (!button) return;
-      const id = button.dataset.add;
-      cart[id] = (Number(cart[id]) || 0) + 1;
-      saveCart();
-      button.textContent = "Added!";
-      setTimeout(() => { button.textContent = "Add to cart"; }, 800);
-    });
-
-    $("cartItems").addEventListener("click", event => {
-      const plus = event.target.closest("[data-plus]");
-      const minus = event.target.closest("[data-minus]");
-      if (plus) {
-        const id = plus.dataset.plus;
-        cart[id] = (Number(cart[id]) || 0) + 1;
-      }
-      if (minus) {
-        const id = minus.dataset.minus;
-        cart[id] = (Number(cart[id]) || 0) - 1;
-        if (cart[id] <= 0) delete cart[id];
-      }
-      saveCart();
-    });
-
-    ["searchInput", "categoryFilter", "sortFilter"].forEach(id => {
-      $(id).addEventListener(id === "searchInput" ? "input" : "change", renderProducts);
-    });
-
-    $("loginToggle").addEventListener("click", () => {
-      $("otpPanel").classList.toggle("hidden");
-    });
-    $("cartToggle").addEventListener("click", () => {
-      $("cartPanel").classList.toggle("hidden");
-    });
 
     function normalizeIndianPhone(value) {
       const digits = value.replace(/\D/g, "");
       if (/^[6-9]\d{9}$/.test(digits)) return "+91" + digits;
       if (/^91[6-9]\d{9}$/.test(digits)) return "+" + digits;
-      if (/^\+91[6-9]\d{9}$/.test(value.trim())) return value.trim();
-      throw new Error("Enter a valid 10-digit Indian mobile number.");
+      return "";
     }
 
-    async function callOtpFunction(payload) {
-      if (!SUPABASE_PUBLISHABLE_KEY ||
-          SUPABASE_PUBLISHABLE_KEY === "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE") {
-        throw new Error("Add your Supabase publishable key in the HTML first.");
-      }
-
-      const response = await fetch(OTP_FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_PUBLISHABLE_KEY
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const text = await response.text();
-      let result;
-      try { result = text ? JSON.parse(text) : {}; }
-      catch { result = { message: text }; }
-
-      if (!response.ok) {
-        // Do not display server internals or secrets to the customer.
-        console.error("OTP function failed:", response.status, result);
-        if (response.status === 401) {
-          throw new Error("Authorization failed. Check Supabase function access and MiniMoth credentials.");
-        }
-        throw new Error(result.error || result.message || `OTP request failed (${response.status}).`);
-      }
-      return result;
-    }
-
-    $("sendForm").addEventListener("submit", async event => {
-      event.preventDefault();
-      const button = $("sendButton");
-      button.disabled = true;
-      $("otpStatus").textContent = "Sending OTP...";
+    function saveCart() {
       try {
-        const phone = normalizeIndianPhone($("phone").value);
-        $("phone").value = phone;
-        await callOtpFunction({ action: "send", phone });
-        $("verifyForm").classList.remove("hidden");
-        $("otpStatus").textContent = "OTP request accepted. Check your messages.";
+        localStorage.setItem("blurancy_cart_v2", JSON.stringify(cart));
+      } catch {
+        setStatus("checkoutStatus", "Your browser could not save the cart.");
+      }
+      renderCart();
+    }
+
+    function renderProducts() {
+      const search = byId("searchInput").value.trim().toLowerCase();
+      const category = byId("categorySelect").value;
+
+      const filtered = products.filter(p =>
+        (category === "All" || p.category === category) &&
+        (p.name.toLowerCase().includes(search) ||
+         p.category.toLowerCase().includes(search))
+      );
+
+      byId("resultCount").textContent = filtered.length + " products";
+      byId("noProducts").hidden = filtered.length !== 0;
+
+      productGrid.innerHTML = filtered.map(p => `
+        <article class="product">
+          <div style="height:180px;display:grid;place-items:center;background:#e5edff;font-size:68px" aria-hidden="true">${p.emoji}</div>
+          <div class="product-info">
+            <span class="category">${p.category}</span>
+            <h3>${p.name}</h3>
+            <div>
+              <span class="price">${money(p.price)}</span>
+              <span class="old-price">${money(p.oldPrice)}</span>
+            </div>
+            <button class="btn add-cart" data-id="${p.id}" type="button">Add to Cart</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderCart() {
+      const entries = Object.entries(cart)
+        .map(([id, qty]) => ({ product: products.find(p => p.id === Number(id)), qty: Number(qty) }))
+        .filter(item => item.product && Number.isInteger(item.qty) && item.qty > 0);
+
+      const count = entries.reduce((sum, item) => sum + item.qty, 0);
+      const total = entries.reduce((sum, item) => sum + item.product.price * item.qty, 0);
+
+      byId("cartCount").textContent = count;
+      byId("cartTotal").textContent = money(total);
+
+      if (!entries.length) {
+        cartItems.innerHTML = '<p class="muted">Your cart is empty. Add a product to begin.</p>';
+        return;
+      }
+
+      cartItems.innerHTML = entries.map(({ product, qty }) => `
+        <div class="cart-row">
+          <div><strong>${product.name}</strong><br><span class="muted">${money(product.price)} each</span></div>
+          <div class="qty">
+            <button type="button" data-action="minus" data-id="${product.id}" aria-label="Decrease quantity">−</button>
+            <span>${qty}</span>
+            <button type="button" data-action="plus" data-id="${product.id}" aria-label="Increase quantity">+</button>
+          </div>
+          <strong>${money(product.price * qty)}</strong>
+        </div>
+      `).join("");
+    }
+
+    productGrid.addEventListener("click", event => {
+      const button = event.target.closest("button[data-id]");
+      if (!button) return;
+      const id = Number(button.dataset.id);
+      cart[id] = (Number(cart[id]) || 0) + 1;
+      saveCart();
+      button.textContent = "Added!";
+      setTimeout(() => { button.textContent = "Add to Cart"; }, 700);
+    });
+
+    cartItems.addEventListener("click", event => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const id = button.dataset.id;
+      const next = (Number(cart[id]) || 0) + (button.dataset.action === "plus" ? 1 : -1);
+      if (next <= 0) delete cart[id];
+      else cart[id] = next;
+      saveCart();
+    });
+
+    byId("searchInput").addEventListener("input", renderProducts);
+    byId("categorySelect").addEventListener("change", renderProducts);
+
+    byId("cartButton").addEventListener("click", () => {
+      byId("cartSection").scrollIntoView({ behavior: "smooth" });
+    });
+
+    byId("accountButton").addEventListener("click", () => {
+      byId("accountSection").hidden = false;
+      byId("accountSection").scrollIntoView({ behavior: "smooth" });
+    });
+
+    byId("closeAccount").addEventListener("click", () => {
+      byId("accountSection").hidden = true;
+    });
+
+    byId("clearCart").addEventListener("click", () => {
+      cart = {};
+      saveCart();
+      setStatus("checkoutStatus", "Cart cleared.", true);
+    });
+
+    byId("checkoutButton").addEventListener("click", async () => {
+      const entries = Object.entries(cart).filter(([, qty]) => Number(qty) > 0);
+      if (!entries.length) {
+        setStatus("checkoutStatus", "Add products to your cart first.");
+        return;
+      }
+
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        setStatus("checkoutStatus", "Could not check your login status.");
+        return;
+      }
+
+      if (!session) {
+        setStatus("checkoutStatus", "Please log in or verify your phone before checkout.");
+        byId("accountSection").hidden = false;
+        byId("accountSection").scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+
+      setStatus(
+        "checkoutStatus",
+        "You are signed in. Order placement and payment are not connected yet."
+      );
+    });
+
+    // Phone OTP: Supabase Auth sends the SMS through its configured provider.
+    byId("sendPhoneOtp").addEventListener("click", async () => {
+      const phone = normalizeIndianPhone(byId("phoneInput").value);
+      if (!phone) {
+        setStatus("phoneStatus", "Enter a valid Indian mobile number.");
+        return;
+      }
+
+      const button = byId("sendPhoneOtp");
+      button.disabled = true;
+      setStatus("phoneStatus", "Requesting SMS OTP...", true);
+
+      try {
+        const { error } = await supabase.auth.signInWithOtp({
+          phone,
+          options: { shouldCreateUser: true }
+        });
+        if (error) throw error;
+
+        pendingPhone = phone;
+        byId("phoneCodeArea").hidden = false;
+        setStatus("phoneStatus", "OTP request accepted. Check your SMS messages.", true);
       } catch (error) {
-        $("otpStatus").textContent = error.message || "Could not send OTP.";
+        setStatus("phoneStatus", "OTP request failed: " + error.message);
       } finally {
         button.disabled = false;
       }
     });
 
-    $("verifyForm").addEventListener("submit", async event => {
-      event.preventDefault();
-      const button = $("verifyButton");
+    byId("verifyPhoneOtp").addEventListener("click", async () => {
+      const token = byId("phoneCode").value.trim();
+      if (!pendingPhone) {
+        setStatus("phoneStatus", "Request an OTP first.");
+        return;
+      }
+      if (!/^\d{6}$/.test(token)) {
+        setStatus("phoneStatus", "Enter the 6-digit OTP.");
+        return;
+      }
+
+      const button = byId("verifyPhoneOtp");
       button.disabled = true;
-      $("otpStatus").textContent = "Verifying OTP...";
+      setStatus("phoneStatus", "Verifying code...", true);
+
       try {
-        const phone = normalizeIndianPhone($("phone").value);
-        const code = $("otpCode").value.trim();
-        if (!/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit OTP.");
-        const result = await callOtpFunction({ action: "verify", phone, code });
-        if (result.verified === false || result.success === false) {
-          throw new Error("The OTP was not verified. Check the code and try again.");
-        }
-        $("otpStatus").textContent = "OTP verification succeeded.";
-        $("verifyForm").classList.add("hidden");
+        const { data, error } = await supabase.auth.verifyOtp({
+          phone: pendingPhone,
+          token,
+          type: "sms"
+        });
+        if (error) throw error;
+        if (!data.session) throw new Error("No session returned.");
+
+        byId("phoneCodeArea").hidden = true;
+        setStatus("phoneStatus", "Phone verified and login successful.", true);
+        await refreshAccount();
       } catch (error) {
-        $("otpStatus").textContent = error.message || "OTP verification failed.";
+        setStatus("phoneStatus", "Verification failed: " + error.message);
       } finally {
         button.disabled = false;
       }
     });
 
-    $("checkoutButton").addEventListener("click", () => {
-      $("checkoutStatus").textContent =
-        "Cart ready. Connect a secure checkout backend before accepting real payments.";
+    // Email OTP: numeric codes require an email template configured with {{ .Token }}.
+    byId("sendEmailOtp").addEventListener("click", async () => {
+      const email = byId("emailInput").value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setStatus("emailStatus", "Enter a valid email address.");
+        return;
+      }
+
+      const button = byId("sendEmailOtp");
+      button.disabled = true;
+      setStatus("emailStatus", "Requesting email code...", true);
+
+      try {
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: true }
+        });
+        if (error) throw error;
+
+        pendingEmail = email;
+        byId("emailCodeArea").hidden = false;
+        setStatus("emailStatus", "Email OTP requested. Check your inbox and spam folder.", true);
+      } catch (error) {
+        setStatus("emailStatus", "Email request failed: " + error.message);
+      } finally {
+        button.disabled = false;
+      }
     });
 
-    $("year").textContent = new Date().getFullYear();
+    byId("verifyEmailOtp").addEventListener("click", async () => {
+      const token = byId("emailCode").value.trim();
+      if (!pendingEmail) {
+        setStatus("emailStatus", "Request an email code first.");
+        return;
+      }
+      if (!/^\d{6}$/.test(token)) {
+        setStatus("emailStatus", "Enter the 6-digit email code.");
+        return;
+      }
+
+      const button = byId("verifyEmailOtp");
+      button.disabled = true;
+      setStatus("emailStatus", "Verifying email code...", true);
+
+      try {
+        const { error } = await supabase.auth.verifyOtp({
+          email: pendingEmail,
+          token,
+          type: "email"
+        });
+        if (error) throw error;
+
+        byId("emailCodeArea").hidden = true;
+        setStatus("emailStatus", "Email verified and login successful.", true);
+        await refreshAccount();
+      } catch (error) {
+        setStatus("emailStatus", "Verification failed: " + error.message);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    async function refreshAccount() {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) return;
+
+      const session = data.session;
+      byId("signedInPanel").hidden = !session;
+      byId("authForms").hidden = Boolean(session);
+
+      if (session) {
+        byId("signedInText").textContent =
+          "Signed in as " + (session.user.phone || session.user.email || "verified user");
+      }
+    }
+
+    byId("signOutButton").addEventListener("click", async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        alert("Could not sign out: " + error.message);
+        return;
+      }
+      await refreshAccount();
+    });
+
+    supabase.auth.onAuthStateChange(() => {
+      refreshAccount();
+    });
+
     renderProducts();
     renderCart();
+    refreshAccount();
+  })();
   </script>
 </body>
 </html>
-```
