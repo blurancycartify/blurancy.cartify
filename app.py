@@ -1,169 +1,268 @@
+
+import os
+import re
+import time
+import hmac
+import hashlib
+import secrets
+import logging
+from threading import Lock
+
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Only allow your Blurancy Cartify website domains.
+ALLOWED_ORIGINS = [
+    "https://blurancycartify.de5.net",
+    "https://blurancycartify.github.io",
+]
 
 CORS(
     app,
-    resources={r"/*": {
-        "origins": [
-            "https://blurancycartify.de5.net",
-            "https://blurancycartify.github.io"
-        ],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }}
+    resources={
+        r"/*": {
+            "origins": ALLOWED_ORIGINS,
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+        }
+    },
+    supports_credentials=False,
 )
-import os
-import time
-import secrets
-import hashlib
-import threading
-import requests
 
-from flask import Flask, request, jsonify
+# Configure these values in Render Environment, never in GitHub.
+SMS_ACCOUNT_SID = os.environ.get("SMS_ACCOUNT_SID", "").strip()
+SMS_AUTH_TOKEN = os.environ.get("SMS_AUTH_TOKEN", "").strip()
+SMS_FROM_NUMBER = os.environ.get("SMS_FROM_NUMBER", "").strip()
+OTP_SECRET = os.environ.get("OTP_SECRET", "").strip()
 
-app = Flask(__name__)
+OTP_LIFETIME = 300       # OTP expires after 5 minutes
+RESEND_WAIT = 60          # Wait 60 seconds before resending
+MAX_ATTEMPTS = 5          # Maximum verification attempts
+MAX_SENDS_PER_HOUR = 5    # Basic per-phone sending limit
 
-# Configure these in Render's Environment settings.
-SMS_ACCOUNT_SID = os.getenv("SMS_ACCOUNT_SID", "")
-SMS_AUTH_TOKEN = os.getenv("SMS_AUTH_TOKEN", "")
-SMS_FROM_NUMBER = os.getenv("SMS_FROM_NUMBER", "")
-OTP_SECRET = os.getenv("OTP_SECRET", "")
-
-# Starter storage only: resets when the server restarts.
+# Temporary memory storage. Pending OTPs disappear if the server restarts.
 otp_store = {}
-send_log = {}
-lock = threading.Lock()
+last_send = {}
+send_history = {}
+store_lock = Lock()
 
-OTP_LIFETIME = 300  # 5 minutes
+
+def json_error(message, status=400):
+    return jsonify({"success": False, "message": message}), status
 
 
-def phone_is_valid(phone):
-    # India mobile numbers in international format: +91XXXXXXXXXX
-    return (
-        isinstance(phone, str)
-        and len(phone) == 13
-        and phone.startswith("+91")
-        and phone[3:].isdigit()
-        and phone[3] in "6789"
+def normalize_phone(value):
+    """Accept Indian numbers with or without the +91 prefix."""
+    if not isinstance(value, str):
+        return None
+
+    phone = re.sub(r"[\s()-]", "", value.strip())
+
+    if re.fullmatch(r"\d{10}", phone):
+        phone = "+91" + phone
+    elif re.fullmatch(r"91\d{10}", phone):
+        phone = "+" + phone
+
+    # E.164-style format, with a maximum of 15 digits.
+    if not re.fullmatch(r"\+[1-9]\d{7,14}", phone):
+        return None
+
+    return phone
+
+
+def otp_digest(phone, otp):
+    return hmac.new(
+        OTP_SECRET.encode("utf-8"),
+        f"{phone}:{otp}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def send_sms(phone, otp):
+    """Send a real SMS using the Twilio Messages REST API."""
+    url = (
+        "https://api.twilio.com/2010-04-01/Accounts/"
+        f"{SMS_ACCOUNT_SID}/Messages.json"
     )
 
+    message = (
+        f"Your Blurancy Cartify verification code is {otp}. "
+        "It expires in 5 minutes. Do not share this code."
+    )
 
-def otp_hash(phone, otp):
-    return hashlib.sha256(
-        f"{OTP_SECRET}:{phone}:{otp}".encode()
-    ).hexdigest()
+    response = requests.post(
+        url,
+        auth=(SMS_ACCOUNT_SID, SMS_AUTH_TOKEN),
+        data={
+            "To": phone,
+            "From": SMS_FROM_NUMBER,
+            "Body": message,
+        },
+        timeout=15,
+    )
+
+    if not response.ok:
+        # Do not expose Twilio credentials or raw provider responses.
+        logger.error("SMS provider returned HTTP %s", response.status_code)
+        return False
+
+    return True
 
 
 @app.get("/")
 def home():
     return jsonify({
-        "service": "Blurancy Cartify OTP API",
-        "status": "running"
+        "service": "Blurancy Cartify OTP Server",
+        "status": "running",
+        "endpoints": ["/send-otp", "/verify-otp"],
     })
+
+
+@app.get("/health")
+def health():
+    return jsonify({"success": True, "status": "healthy"})
 
 
 @app.post("/send-otp")
 def send_otp():
     data = request.get_json(silent=True) or {}
-    phone = data.get("phone", "")
+    phone = normalize_phone(data.get("phone") or data.get("mobile"))
 
-    if not OTP_SECRET:
-        return jsonify(error="Server OTP secret is not configured"), 500
+    if not phone:
+        return json_error(
+            "Enter a valid phone number with country code, or a 10-digit Indian number."
+        )
 
-    if not phone_is_valid(phone):
-        return jsonify(
-            error="Enter an Indian mobile number like +919876543210"
-        ), 400
-
-    if not all([SMS_ACCOUNT_SID, SMS_AUTH_TOKEN, SMS_FROM_NUMBER]):
-        return jsonify(
-            error="SMS delivery is not configured on the server"
-        ), 503
+    if not all([
+        SMS_ACCOUNT_SID,
+        SMS_AUTH_TOKEN,
+        SMS_FROM_NUMBER,
+        OTP_SECRET,
+    ]):
+        logger.error("Required OTP server environment variables are missing.")
+        return json_error("OTP service is not configured. Please try later.", 503)
 
     now = time.time()
 
-    with lock:
-        recent = [
-            t for t in send_log.get(phone, [])
-            if now - t < 600
-        ]
-        if len(recent) >= 3:
-            return jsonify(
-                error="Too many requests. Try again later."
-            ), 429
-        recent.append(now)
-        send_log[phone] = recent
+    with store_lock:
+        previous = last_send.get(phone, 0)
+        if now - previous < RESEND_WAIT:
+            wait = int(RESEND_WAIT - (now - previous))
+            return json_error(
+                f"Please wait {wait} seconds before requesting another OTP.",
+                429,
+            )
 
-    otp = f"{secrets.randbelow(1_000_000):06d}"
+        history = [
+            sent_at for sent_at in send_history.get(phone, [])
+            if now - sent_at < 3600
+        ]
+
+        if len(history) >= MAX_SENDS_PER_HOUR:
+            return json_error(
+                "Too many OTP requests. Try again later.",
+                429,
+            )
+
+        # Reserve the send slot to reduce repeated concurrent requests.
+        last_send[phone] = now
+        send_history[phone] = history + [now]
+
+    otp = f"{secrets.randbelow(1000000):06d}"
 
     try:
-        response = requests.post(
-            f"https://api.twilio.com/2010-04-01/Accounts/"
-            f"{SMS_ACCOUNT_SID}/Messages.json",
-            auth=(SMS_ACCOUNT_SID, SMS_AUTH_TOKEN),
-            data={
-                "To": phone,
-                "From": SMS_FROM_NUMBER,
-                "Body": (
-                    f"Your Blurancy Cartify verification code is {otp}. "
-                    "It expires in 5 minutes. Do not share it."
-                ),
-            },
-            timeout=15,
-        )
-        response.raise_for_status()
+        sent = send_sms(phone, otp)
     except requests.RequestException:
-        return jsonify(
-            error="SMS provider failed to send the message"
-        ), 502
+        logger.exception("Could not connect to the SMS provider.")
+        sent = False
 
-    with lock:
+    if not sent:
+        with store_lock:
+            # Allow a retry if the provider request failed.
+            if last_send.get(phone) == now:
+                last_send.pop(phone, None)
+            history = send_history.get(phone, [])
+            if history and history[-1] == now:
+                history.pop()
+
+        return json_error(
+            "SMS could not be sent. Check the SMS provider configuration and try again.",
+            502,
+        )
+
+    with store_lock:
         otp_store[phone] = {
-            "hash": otp_hash(phone, otp),
-            "expires": now + OTP_LIFETIME,
+            "digest": otp_digest(phone, otp),
+            "expires": time.time() + OTP_LIFETIME,
             "attempts": 0,
         }
 
-    return jsonify(message="OTP sent if SMS delivery succeeded")
+    return jsonify({
+        "success": True,
+        "message": "OTP sent. Check your SMS messages.",
+    }), 200
 
 
 @app.post("/verify-otp")
 def verify_otp():
     data = request.get_json(silent=True) or {}
-    phone = data.get("phone", "")
-    otp = data.get("otp", "")
+    phone = normalize_phone(data.get("phone") or data.get("mobile"))
+    otp = data.get("otp") or data.get("code")
 
-    if not phone_is_valid(phone) or not (
-        isinstance(otp, str) and len(otp) == 6 and otp.isdigit()
-    ):
-        return jsonify(error="Invalid phone number or OTP format"), 400
+    if not phone:
+        return json_error("Enter a valid phone number.")
 
-    with lock:
+    if not isinstance(otp, str) or not re.fullmatch(r"\d{6}", otp):
+        return json_error("Enter the 6-digit OTP.")
+
+    if not OTP_SECRET:
+        return json_error("OTP service is not configured.", 503)
+
+    now = time.time()
+
+    with store_lock:
         record = otp_store.get(phone)
 
-        if not record or time.time() > record["expires"]:
+        if not record:
+            return json_error(
+                "No active OTP found. Please request a new OTP.",
+                400,
+            )
+
+        if now > record["expires"]:
             otp_store.pop(phone, None)
-            return jsonify(error="OTP expired or not found"), 400
+            return json_error("OTP expired. Please request a new OTP.", 400)
 
-        record["attempts"] += 1
-        if record["attempts"] > 5:
+        if record["attempts"] >= MAX_ATTEMPTS:
             otp_store.pop(phone, None)
-            return jsonify(error="Too many incorrect attempts"), 429
+            return json_error(
+                "Too many incorrect attempts. Request a new OTP.",
+                429,
+            )
 
-        if not secrets.compare_digest(
-            record["hash"], otp_hash(phone, otp)
-        ):
-            return jsonify(error="Incorrect OTP"), 400
+        submitted_digest = otp_digest(phone, otp)
 
+        if not hmac.compare_digest(record["digest"], submitted_digest):
+            record["attempts"] += 1
+            return json_error("Incorrect OTP. Please try again.", 400)
+
+        # One-time use: delete after successful verification.
         otp_store.pop(phone, None)
 
-    return jsonify(
-        verified=True,
-        message="Phone number verified"
-    )
+    return jsonify({
+        "success": True,
+        "verified": True,
+        "message": "Phone number verified successfully.",
+    }), 200
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "10000")))
+    port = int(os.environ.get("PORT", "10000"))
+    app.run(host="0.0.0.0", port=port)
