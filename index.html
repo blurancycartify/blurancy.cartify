@@ -1,93 +1,210 @@
 
-<section id="demo-otp" style="max-width:420px;margin:30px auto;padding:22px;border:1px solid #ddd;border-radius:16px;font-family:Arial,sans-serif;">
-  <h2>Blurancy Cartify Login</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101828">
+  <title>Blurancy Cartify | Online Shopping</title>
+  <meta name="description" content="Shop electronics, fashion, home essentials and more at Blurancy Cartify.">
 
-  <p style="background:#fff3cd;color:#664d03;padding:12px;border-radius:8px;">
-    <strong>DEMO ONLY</strong><br>
-    No SMS is sent. This is not real phone verification.
-  </p>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #182230;
+    }
+    header {
+      background: #101828;
+      color: white;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand { font-size: 22px; font-weight: 800; }
+    button, input, select { font: inherit; }
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 15px;
+      background: #155eef;
+      color: white;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      background: white;
+    }
+    main { max-width: 1150px; margin: auto; padding: 18px; }
+    .panel {
+      background: white;
+      padding: 18px;
+      margin-bottom: 20px;
+      border: 1px solid #e4e7ec;
+      border-radius: 14px;
+    }
+    .search-row, .filters, .otp-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .search-row input { flex: 1; min-width: 180px; }
+    .filters { margin: 14px 0; }
+    .filters button { background: #eaf1ff; color: #1849a9; }
+    .field { display: grid; gap: 7px; margin: 12px 0; }
+    .otp-row > * { flex: 1; min-width: 130px; }
+    .muted { color: #667085; font-size: 14px; }
+    #otpMessage { overflow-wrap: anywhere; }
+    #productGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+      gap: 16px;
+    }
+    .product-card {
+      background: white;
+      padding: 14px;
+      border: 1px solid #e4e7ec;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .product-image {
+      width: 100%;
+      height: 165px;
+      object-fit: contain;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+    .product-card h3 { margin: 3px 0; font-size: 17px; }
+    .product-card p { margin: 0; }
+    .price { font-size: 18px; font-weight: 700; }
+    .cart-item {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      border-bottom: 1px solid #eee;
+      padding: 12px 0;
+    }
+    .cart-item span:first-child { flex: 1; }
+    .cart-item button { padding: 7px 10px; }
+    .danger { background: #b42318; }
+    footer { text-align: center; padding: 25px; color: #667085; }
+    @media (max-width: 520px) {
+      header { align-items: flex-start; }
+      .brand { font-size: 19px; }
+      main { padding: 12px; }
+    }
+  </style>
+</head>
 
-  <label for="demoPhone">Indian mobile number</label>
-  <input id="demoPhone" type="tel" placeholder="+91 9876543210"
-    autocomplete="tel"
-    style="width:100%;padding:12px;margin:10px 0;box-sizing:border-box;">
-
-  <button type="button" onclick="generateDemoOTP()"
-    style="padding:12px;width:100%;cursor:pointer;">
-    Generate Demo OTP
+<body>
+<header>
+  <div class="brand">🛍️ Blurancy Cartify</div>
+  <button id="cartBtn" type="button">
+    🛒 Cart (<span id="cartCount">0</span>)
   </button>
+</header>
 
-  <div id="demoCodeArea" hidden>
-    <label for="demoCode">Enter demo OTP</label>
-    <input id="demoCode" type="text" inputmode="numeric"
-      maxlength="6" placeholder="6-digit demo code"
-      style="width:100%;padding:12px;margin:10px 0;box-sizing:border-box;">
+<main>
+  <section class="panel" id="loginSection">
+    <h2>Phone verification</h2>
+    <p class="muted">
+      Enter your Indian mobile number to receive a real SMS verification code.
+    </p>
 
-    <button type="button" onclick="verifyDemoOTP()"
-      style="padding:12px;width:100%;cursor:pointer;">
-      Verify Demo OTP
-    </button>
-  </div>
+    <form id="otpForm">
+      <div class="field">
+        <label for="otpPhone">Mobile number</label>
+        <input
+          id="otpPhone"
+          type="tel"
+          inputmode="numeric"
+          autocomplete="tel"
+          placeholder="10-digit mobile number"
+          maxlength="16"
+          required
+        >
+      </div>
 
-  <p id="demoMessage" role="status" aria-live="polite"></p>
-</section>
+      <div class="otp-row">
+        <button id="sendOtpBtn" type="button">Send SMS OTP</button>
+      </div>
+
+      <div class="field">
+        <label for="otpCode">6-digit verification code</label>
+        <input
+          id="otpCode"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="Enter OTP"
+          maxlength="6"
+          pattern="[0-9]{6}"
+          required
+        >
+      </div>
+
+      <button id="verifyOtpBtn" type="button">Verify OTP</button>
+      <p id="otpMessage" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Find your products</h2>
+    <form id="searchForm" class="search-row">
+      <input id="searchInput" type="search" placeholder="Search products...">
+      <button type="submit">Search</button>
+    </form>
+
+    <div class="filters" aria-label="Product categories">
+      <button type="button" data-category="all" aria-pressed="true">All</button>
+      <button type="button" data-category="Electronics">Electronics</button>
+      <button type="button" data-category="Fashion">Fashion</button>
+      <button type="button" data-category="Home">Home</button>
+      <button type="button" data-category="Beauty">Beauty</button>
+      <button type="button" data-category="Grocery">Grocery</button>
+    </div>
+
+    <p id="productResultText" class="muted">Loading products...</p>
+    <div id="productGrid">
+      <p>Loading products...</p>
+    </div>
+    <p id="noProducts" hidden>No products found.</p>
+  </section>
+
+  <section class="panel" id="cartSection">
+    <h2>Your shopping cart</h2>
+    <div id="cartItems"></div>
+    <p>Subtotal: <strong id="cartSubtotal">₹0.00</strong></p>
+    <p>Total: <strong id="cartTotal">₹0.00</strong></p>
+    <button id="checkoutBtn" type="button">Continue to checkout</button>
+    <p class="muted">
+      Checkout requires a secure backend for order creation and payment processing.
+    </p>
+  </section>
+</main>
+
+<footer>
+  © <span id="year"></span> Blurancy Cartify. All rights reserved.
+</footer>
 
 <script>
-(() => {
-  let demoCode = "";
-  let expiresAt = 0;
-  let verifiedPhone = "";
-
-  window.generateDemoOTP = function () {
-    const phone = document.getElementById("demoPhone").value
-      .replace(/[\s()-]/g, "");
-    const message = document.getElementById("demoMessage");
-
-    verifiedPhone = "";
-    demoCode = "";
-    document.getElementById("demoCode").value = "";
-    document.getElementById("demoCodeArea").hidden = true;
-
-    if (!/^\+91[6-9]\d{9}$/.test(phone)) {
-      message.textContent =
-        "Enter a valid Indian number, for example +919876543210.";
-      return;
-    }
-
-    demoCode = String(Math.floor(100000 + Math.random() * 900000));
-    expiresAt = Date.now() + 5 * 60 * 1000;
-
-    document.getElementById("demoCodeArea").hidden = false;
-
-    // Demo only: code is shown on screen, never sent by SMS.
-    message.textContent =
-      "DEMO OTP: " + demoCode +
-      ". No SMS sent. Code expires in 5 minutes.";
-  };
-
-  window.verifyDemoOTP = function () {
-    const entered = document.getElementById("demoCode").value.trim();
-    const message = document.getElementById("demoMessage");
-    const phone = document.getElementById("demoPhone").value
-      .replace(/[\s()-]/g, "");
-
-    if (!demoCode || Date.now() > expiresAt) {
-      demoCode = "";
-      verifiedPhone = "";
-      message.textContent = "Demo OTP expired. Generate a new code.";
-      return;
-    }
-
-    if (entered !== demoCode) {
-      message.textContent = "Incorrect demo OTP. Try again.";
-      return;
-    }
-
-    verifiedPhone = phone;
-    demoCode = "";
-    message.textContent =
-      "Demo verification successful for " + phone +
-      ". This does not verify ownership of the phone number.";
-  };
-})();
+  document.getElementById("year").textContent =
+    new Date().getFullYear();
 </script>
+
+<!-- Shopping and real OTP API logic -->
+<script src="assets/app.js?v=2" defer></script>
+</body>
+</html>
