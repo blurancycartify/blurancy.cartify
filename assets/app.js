@@ -2,246 +2,733 @@
 "use strict";
 
 /*
- * Blurancy Cartify
- * Shopping + real OTP API integration
+ * BLURANCY CARTIFY
+ * Shopping features + real OTP API integration
  *
- * API: https://blurancy-cartify.onrender.com
- * Requires the server's /send-otp and /verify-otp routes.
- * Never use demo OTPs for real authentication.
+ * Render API:
+ * https://blurancy-cartify.onrender.com
+ *
+ * Required OTP HTML IDs:
+ * otpPhone, otpCode, sendOtpBtn, verifyOtpBtn, otpMessage
+ *
+ * Optional shopping HTML IDs:
+ * productGrid, searchForm, searchInput, cartBtn, cartCount,
+ * noProducts, productResultText
  */
 
-const OTP_API = "https://blurancy-cartify.onrender.com";
-
-const Cartify = {
-  products: [],
-  cart: JSON.parse(localStorage.getItem("blurancy_cart") || "[]"),
-  verifiedPhone: null
+const CARTIFY_CONFIG = {
+  otpApi: "https://blurancy-cartify.onrender.com",
+  productsUrl: "./products.json",
+  cartStorageKey: "blurancy_cart"
 };
 
-async function apiRequest(path, data) {
-  const response = await fetch(`${OTP_API}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+const $ = (selector, root = document) => root.querySelector(selector);
 
-  const result = await response.json().catch(() => ({}));
+const $$ = (selector, root = document) =>
+  Array.from(root.querySelectorAll(selector));
 
-  if (!response.ok) {
-    throw new Error(result.error || `Server error (${response.status})`);
+let cartifyProducts = [];
+let cartifyOtpSentTo = "";
+let cartifyVerifiedPhone = "";
+let cartifyCategory = "all";
+let cartifySearch = "";
+
+/* ------------------------------
+   GENERAL HELPERS
+------------------------------ */
+
+function showMessage(element, message, type = "info") {
+  if (!element) {
+    console.log(message);
+    return;
   }
 
-  return result;
+  element.textContent = message;
+  element.dataset.status = type;
+  element.setAttribute("role", "status");
+
+  element.style.color =
+    type === "error" ? "#c62828" :
+    type === "success" ? "#16803c" :
+    "#333333";
 }
 
-// ---------- REAL OTP: NO BROWSER-GENERATED CODES ----------
-
-async function sendCartifyOTP(phone) {
-  const normalized = phone.replace(/[\s()-]/g, "");
-
-  if (!/^\+91[6-9]\d{9}$/.test(normalized)) {
-    throw new Error("Enter an Indian mobile number like +919876543210.");
-  }
-
-  Cartify.verifiedPhone = null;
-
-  const result = await apiRequest("/send-otp", {
-    phone: normalized
-  });
-
-  showMessage(
-    "otpMessage",
-    result.message || "OTP request completed. Check your phone if SMS delivery is configured."
-  );
-
-  return result;
-}
-
-async function verifyCartifyOTP(phone, otp) {
-  const normalized = phone.replace(/[\s()-]/g, "");
-
-  if (!/^\+91[6-9]\d{9}$/.test(normalized)) {
-    throw new Error("Enter a valid Indian mobile number.");
-  }
-
-  if (!/^\d{6}$/.test(otp)) {
-    throw new Error("Enter the six-digit OTP.");
-  }
-
-  const result = await apiRequest("/verify-otp", {
-    phone: normalized,
-    otp: otp
-  });
-
-  if (result.verified !== true) {
-    throw new Error("Phone verification was not confirmed.");
-  }
-
-  Cartify.verifiedPhone = normalized;
-  showMessage("otpMessage", "Phone number verified successfully.");
-  return result;
-}
-
-// ---------- USER INTERFACE HELPERS ----------
-
-function showMessage(id, message) {
-  const element = document.getElementById(id);
-  if (element) element.textContent = message;
-}
-
-function bindOTPForm() {
-  const sendButton = document.getElementById("sendOtpBtn");
-  const verifyButton = document.getElementById("verifyOtpBtn");
-
-  if (sendButton) {
-    sendButton.addEventListener("click", async () => {
-      const phone = document.getElementById("otpPhone")?.value || "";
-      sendButton.disabled = true;
-
-      try {
-        await sendCartifyOTP(phone);
-      } catch (error) {
-        showMessage("otpMessage", error.message);
-      } finally {
-        sendButton.disabled = false;
-      }
-    });
-  }
-
-  if (verifyButton) {
-    verifyButton.addEventListener("click", async () => {
-      const phone = document.getElementById("otpPhone")?.value || "";
-      const otp = document.getElementById("otpCode")?.value || "";
-      verifyButton.disabled = true;
-
-      try {
-        await verifyCartifyOTP(phone, otp);
-      } catch (error) {
-        showMessage("otpMessage", error.message);
-      } finally {
-        verifyButton.disabled = false;
-      }
-    });
-  }
-}
-
-// ---------- SHOPPING: PRODUCT DISPLAY ----------
-
-function renderProducts(products = Cartify.products) {
-  const grid = document.getElementById("productGrid");
-  if (!grid) return;
-
-  grid.replaceChildren();
-
-  products.forEach(product => {
-    const card = document.createElement("article");
-    card.className = "product-card";
-
-    const title = document.createElement("h3");
-    title.textContent = product.name || product.title || "Product";
-
-    const price = document.createElement("p");
-    price.textContent = `₹${Number(product.price || 0).toFixed(2)}`;
-
-    const addButton = document.createElement("button");
-    addButton.type = "button";
-    addButton.textContent = "Add to Cart";
-    addButton.addEventListener("click", () => addToCart(product));
-
-    card.append(title, price, addButton);
-    grid.appendChild(card);
-  });
-
-  showMessage("productResultText", `${products.length} products`);
-}
-
-function filterProducts() {
-  const search = (
-    document.getElementById("searchInput")?.value || ""
-  ).trim().toLowerCase();
-
-  const category = document.getElementById("categoryFilter")?.value || "";
-
-  const filtered = Cartify.products.filter(product => {
-    const name = product.name || product.title || "";
-    const matchesSearch = name.toLowerCase().includes(search);
-    const matchesCategory = !category || product.category === category;
-
-    return matchesSearch && matchesCategory;
-  });
-
-  renderProducts(filtered);
-}
-
-async function loadProducts() {
-  // Adapt this endpoint if your catalogue uses Supabase or another API.
-  const grid = document.getElementById("productGrid");
-  if (!grid) return;
+async function readJsonResponse(response) {
+  const text = await response.text();
+  let data = {};
 
   try {
-    const response = await fetch("./products.json");
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error("The server returned an invalid response.");
+  }
 
-    if (!response.ok) {
-      throw new Error("No products.json catalogue was found.");
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+      data.message ||
+      `Request failed with HTTP ${response.status}.`
+    );
+  }
+
+  return data;
+}
+
+function normalizeIndianPhone(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+
+  if (digits.startsWith("91") && digits.length === 12) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.length !== 10 || !/^[6-9]\d{9}$/.test(digits)) {
+    throw new Error(
+      "Enter a valid 10-digit Indian mobile number."
+    );
+  }
+
+  return `+91${digits}`;
+}
+
+function formatRupees(amount) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2
+  }).format(Number(amount) || 0);
+}
+
+/* ------------------------------
+   REAL OTP: SEND
+------------------------------ */
+
+async function sendCartifyOTP() {
+  const phoneInput = $("#otpPhone");
+  const sendButton = $("#sendOtpBtn");
+  const message = $("#otpMessage");
+
+  if (!phoneInput) {
+    console.error("Missing #otpPhone in index.html");
+    return;
+  }
+
+  let phone;
+
+  try {
+    phone = normalizeIndianPhone(phoneInput.value);
+  } catch (error) {
+    showMessage(message, error.message, "error");
+    return;
+  }
+
+  if (sendButton) sendButton.disabled = true;
+
+  showMessage(message, "Requesting an SMS OTP...", "info");
+
+  try {
+    const response = await fetch(
+      `${CARTIFY_CONFIG.otpApi}/send-otp`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ phone })
+      }
+    );
+
+    const data = await readJsonResponse(response);
+
+    cartifyOtpSentTo = phone;
+    cartifyVerifiedPhone = "";
+
+    const codeInput = $("#otpCode");
+    if (codeInput) {
+      codeInput.value = "";
+      codeInput.disabled = false;
     }
 
-    const data = await response.json();
-    Cartify.products = Array.isArray(data) ? data : data.products || [];
-    renderProducts();
-  } catch (error) {
     showMessage(
-      "productResultText",
-      "Product catalogue not connected. Configure products.json or your product database."
+      message,
+      data.message || "OTP request accepted. Check your SMS messages.",
+      "success"
     );
+  } catch (error) {
+    console.error("OTP send error:", error);
+
+    showMessage(
+      message,
+      `${error.message} Check the Render server, SMS provider, and CORS configuration.`,
+      "error"
+    );
+  } finally {
+    if (sendButton) sendButton.disabled = false;
   }
 }
 
-// ---------- SHOPPING: CART ----------
+/* ------------------------------
+   REAL OTP: VERIFY
+------------------------------ */
 
-function saveCart() {
-  localStorage.setItem("blurancy_cart", JSON.stringify(Cartify.cart));
-  updateCartCount();
+async function verifyCartifyOTP() {
+  const phoneInput = $("#otpPhone");
+  const codeInput = $("#otpCode");
+  const verifyButton = $("#verifyOtpBtn");
+  const message = $("#otpMessage");
+
+  if (!phoneInput || !codeInput) {
+    showMessage(
+      message,
+      "OTP phone or code field is missing from index.html.",
+      "error"
+    );
+    return;
+  }
+
+  let phone;
+
+  try {
+    phone = normalizeIndianPhone(phoneInput.value);
+  } catch (error) {
+    showMessage(message, error.message, "error");
+    return;
+  }
+
+  const otp = codeInput.value.trim();
+
+  if (!/^\d{6}$/.test(otp)) {
+    showMessage(message, "Enter the 6-digit OTP received by SMS.", "error");
+    return;
+  }
+
+  if (!cartifyOtpSentTo || phone !== cartifyOtpSentTo) {
+    showMessage(
+      message,
+      "Send a new OTP to this phone number before verifying.",
+      "error"
+    );
+    return;
+  }
+
+  if (verifyButton) verifyButton.disabled = true;
+
+  showMessage(message, "Verifying OTP...", "info");
+
+  try {
+    const response = await fetch(
+      `${CARTIFY_CONFIG.otpApi}/verify-otp`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ phone, otp })
+      }
+    );
+
+    const data = await readJsonResponse(response);
+
+    if (data.verified !== true) {
+      throw new Error(data.message || "OTP verification failed.");
+    }
+
+    cartifyVerifiedPhone = phone;
+
+    showMessage(
+      message,
+      "Phone number verified successfully.",
+      "success"
+    );
+
+    document.dispatchEvent(
+      new CustomEvent("cartify:phone-verified", {
+        detail: { phone }
+      })
+    );
+  } catch (error) {
+    console.error("OTP verification error:", error);
+
+    showMessage(message, error.message, "error");
+  } finally {
+    if (verifyButton) verifyButton.disabled = false;
+  }
 }
 
-function addToCart(product) {
-  const id = product.id ?? product.product_id ?? product.name;
-  const existing = Cartify.cart.find(item => item.id === id);
+/* ------------------------------
+   SHOPPING CART
+------------------------------ */
+
+function getCart() {
+  try {
+    const cart = JSON.parse(
+      localStorage.getItem(CARTIFY_CONFIG.cartStorageKey) || "[]"
+    );
+
+    return Array.isArray(cart) ? cart : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCart(cart) {
+  localStorage.setItem(
+    CARTIFY_CONFIG.cartStorageKey,
+    JSON.stringify(cart)
+  );
+
+  updateCartCount();
+
+  document.dispatchEvent(
+    new CustomEvent("cartify:cart-updated", {
+      detail: { cart }
+    })
+  );
+}
+
+function addToCart(productId) {
+  const product = cartifyProducts.find(
+    item => String(item.id) === String(productId)
+  );
+
+  if (!product) {
+    showMessage(
+      $("#productResultText"),
+      "Product not found. Reload the product list.",
+      "error"
+    );
+    return;
+  }
+
+  const cart = getCart();
+  const existing = cart.find(
+    item => String(item.id) === String(productId)
+  );
 
   if (existing) {
-    existing.quantity = (existing.quantity || 1) + 1;
+    existing.quantity = (Number(existing.quantity) || 1) + 1;
   } else {
-    Cartify.cart.push({
-      id,
-      name: product.name || product.title || "Product",
-      price: Number(product.price || 0),
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price) || 0,
+      image: product.image || "",
       quantity: 1
     });
   }
 
-  saveCart();
-  showMessage("cartMessage", "Product added to your cart.");
+  saveCart(cart);
+
+  showMessage(
+    $("#productResultText"),
+    `${product.name} added to your cart.`,
+    "success"
+  );
+}
+
+function changeCartQuantity(productId, change) {
+  const cart = getCart();
+  const item = cart.find(
+    product => String(product.id) === String(productId)
+  );
+
+  if (!item) return;
+
+  item.quantity = (Number(item.quantity) || 1) + change;
+
+  const updatedCart = cart.filter(item => item.quantity > 0);
+
+  saveCart(updatedCart);
+  renderCart();
+}
+
+function removeFromCart(productId) {
+  saveCart(
+    getCart().filter(
+      item => String(item.id) !== String(productId)
+    )
+  );
+
+  renderCart();
+}
+
+function getCartTotal() {
+  return getCart().reduce((total, item) => {
+    return total +
+      (Number(item.price) || 0) *
+      (Number(item.quantity) || 1);
+  }, 0);
 }
 
 function updateCartCount() {
-  const count = Cartify.cart.reduce(
-    (total, item) => total + (item.quantity || 1),
+  const countElement = $("#cartCount");
+  if (!countElement) return;
+
+  const count = getCart().reduce(
+    (total, item) => total + (Number(item.quantity) || 1),
     0
   );
 
-  const element = document.getElementById("cartCount");
-  if (element) element.textContent = String(count);
+  countElement.textContent = String(count);
 }
 
-// ---------- INITIALIZE ----------
+function renderCart() {
+  const cartContainer = $("#cartItems");
+  const totalElement = $("#cartTotal");
+  const subtotalElement = $("#cartSubtotal");
+
+  if (!cartContainer && !totalElement && !subtotalElement) return;
+
+  const cart = getCart();
+
+  if (cartContainer) {
+    cartContainer.replaceChildren();
+
+    if (cart.length === 0) {
+      const empty = document.createElement("p");
+      empty.textContent = "Your cart is empty.";
+      cartContainer.appendChild(empty);
+    }
+
+    cart.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "cart-item";
+
+      const name = document.createElement("span");
+      name.textContent = item.name || "Product";
+
+      const quantity = document.createElement("span");
+      quantity.textContent = `Qty: ${item.quantity}`;
+
+      const price = document.createElement("span");
+      price.textContent = formatRupees(
+        (Number(item.price) || 0) * (Number(item.quantity) || 1)
+      );
+
+      const minus = document.createElement("button");
+      minus.type = "button";
+      minus.textContent = "−";
+      minus.setAttribute("aria-label", "Decrease quantity");
+      minus.addEventListener("click", () => {
+        changeCartQuantity(item.id, -1);
+      });
+
+      const plus = document.createElement("button");
+      plus.type = "button";
+      plus.textContent = "+";
+      plus.setAttribute("aria-label", "Increase quantity");
+      plus.addEventListener("click", () => {
+        changeCartQuantity(item.id, 1);
+      });
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", () => removeFromCart(item.id));
+
+      row.append(name, quantity, price, minus, plus, remove);
+      cartContainer.appendChild(row);
+    });
+  }
+
+  if (subtotalElement) {
+    subtotalElement.textContent = formatRupees(getCartTotal());
+  }
+
+  if (totalElement) {
+    totalElement.textContent = formatRupees(getCartTotal());
+  }
+}
+
+/* ------------------------------
+   PRODUCT LIST
+------------------------------ */
+
+function getProductName(product) {
+  return product.name || product.product_name || product.title || "Product";
+}
+
+function getProductImage(product) {
+  return product.image ||
+    product.image_url ||
+    product.imageUrl ||
+    "";
+}
+
+function getProductCategory(product) {
+  return product.category ||
+    product.category_name ||
+    "Other";
+}
+
+function renderProducts(products = cartifyProducts) {
+  const grid = $("#productGrid");
+
+  if (!grid) {
+    console.warn(
+      "No #productGrid found. Existing product HTML will be left unchanged."
+    );
+    return;
+  }
+
+  const filtered = products.filter(product => {
+    const name = getProductName(product).toLowerCase();
+    const category = getProductCategory(product).toLowerCase();
+
+    const matchesSearch =
+      !cartifySearch ||
+      name.includes(cartifySearch) ||
+      String(product.description || "")
+        .toLowerCase()
+        .includes(cartifySearch);
+
+    const matchesCategory =
+      cartifyCategory === "all" ||
+      category === cartifyCategory.toLowerCase();
+
+    return matchesSearch && matchesCategory;
+  });
+
+  grid.replaceChildren();
+
+  filtered.forEach(product => {
+    const card = document.createElement("article");
+    card.className = "product-card";
+
+    const image = document.createElement("img");
+    image.className = "product-image";
+    image.alt = getProductName(product);
+    image.loading = "lazy";
+    image.src = getProductImage(product);
+
+    image.addEventListener("error", () => {
+      image.hidden = true;
+    });
+
+    const title = document.createElement("h3");
+    title.textContent = getProductName(product);
+
+    const description = document.createElement("p");
+    description.textContent = product.description || "";
+
+    const price = document.createElement("p");
+    price.className = "product-price";
+    price.textContent = formatRupees(product.price);
+
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "add-to-cart";
+    addButton.textContent = "Add to Cart";
+    addButton.addEventListener("click", () => {
+      addToCart(product.id);
+    });
+
+    card.append(image, title, description, price, addButton);
+    grid.appendChild(card);
+  });
+
+  const noProducts = $("#noProducts");
+  if (noProducts) {
+    noProducts.hidden = filtered.length > 0;
+  }
+
+  const resultText = $("#productResultText");
+  if (resultText) {
+    resultText.textContent = `${filtered.length} product(s) found`;
+  }
+}
+
+async function loadProducts() {
+  const grid = $("#productGrid");
+
+  try {
+    const response = await fetch(
+      `${CARTIFY_CONFIG.productsUrl}?v=2`,
+      { cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Products request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const products = Array.isArray(data)
+      ? data
+      : Array.isArray(data.products)
+        ? data.products
+        : [];
+
+    if (products.length === 0) {
+      throw new Error("The product file contains no products.");
+    }
+
+    cartifyProducts = products.map((product, index) => ({
+      ...product,
+      id: product.id ?? index + 1,
+      name: getProductName(product),
+      image: getProductImage(product),
+      category: getProductCategory(product),
+      price: Number(product.price) || 0
+    }));
+
+    renderProducts();
+  } catch (error) {
+    console.warn("Could not load products.json:", error);
+
+    // Do not erase existing HTML if this website already renders
+    // products using Supabase or another script.
+    if (grid && grid.children.length === 0) {
+      const message = document.createElement("p");
+      message.textContent =
+        "Products could not be loaded. Check products.json or your product database connection.";
+      grid.appendChild(message);
+    }
+  }
+}
+
+/* ------------------------------
+   SEARCH AND CATEGORY FILTERS
+------------------------------ */
+
+function setupSearch() {
+  const searchInput = $("#searchInput");
+  const searchForm = $("#searchForm");
+
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      cartifySearch = searchInput.value.trim().toLowerCase();
+      renderProducts();
+    });
+  }
+
+  if (searchForm) {
+    searchForm.addEventListener("submit", event => {
+      event.preventDefault();
+
+      if (searchInput) {
+        cartifySearch = searchInput.value.trim().toLowerCase();
+        renderProducts();
+      }
+    });
+  }
+
+  $$("[data-category]").forEach(button => {
+    button.addEventListener("click", () => {
+      cartifyCategory =
+        String(button.dataset.category || "all").toLowerCase();
+
+      $$("[data-category]").forEach(item => {
+        item.setAttribute(
+          "aria-pressed",
+          String(item === button)
+        );
+      });
+
+      renderProducts();
+    });
+  });
+}
+
+/* ------------------------------
+   BUTTON WIRING
+------------------------------ */
+
+function setupButtons() {
+  const sendButton = $("#sendOtpBtn");
+  const verifyButton = $("#verifyOtpBtn");
+
+  if (sendButton) {
+    sendButton.addEventListener("click", event => {
+      event.preventDefault();
+      sendCartifyOTP();
+    });
+  }
+
+  if (verifyButton) {
+    verifyButton.addEventListener("click", event => {
+      event.preventDefault();
+      verifyCartifyOTP();
+    });
+  }
+
+  const cartButton = $("#cartBtn");
+  if (cartButton) {
+    cartButton.addEventListener("click", () => {
+      const cartSection = $("#cartSection") || $("#cartItems");
+
+      if (cartSection) {
+        cartSection.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      } else {
+        renderCart();
+        alert(`Cart total: ${formatRupees(getCartTotal())}`);
+      }
+    });
+  }
+
+  const checkoutButton = $("#checkoutBtn");
+  if (checkoutButton) {
+    checkoutButton.addEventListener("click", () => {
+      if (getCart().length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      if (!cartifyVerifiedPhone) {
+        alert("Please verify your phone number before checkout.");
+        return;
+      }
+
+      // This is only a frontend validation step.
+      // Connect a secure backend before creating real orders
+      // or accepting payments.
+      document.dispatchEvent(
+        new CustomEvent("cartify:checkout-requested", {
+          detail: {
+            phone: cartifyVerifiedPhone,
+            cart: getCart(),
+            total: getCartTotal()
+          }
+        })
+      );
+
+      alert(
+        "Phone verified. Checkout still needs a secure order and payment backend."
+      );
+    });
+  }
+
+  const phoneInput = $("#otpPhone");
+  if (phoneInput) {
+    phoneInput.addEventListener("input", () => {
+      if (cartifyOtpSentTo) {
+        try {
+          if (normalizeIndianPhone(phoneInput.value) !== cartifyOtpSentTo) {
+            cartifyOtpSentTo = "";
+            cartifyVerifiedPhone = "";
+          }
+        } catch {
+          cartifyOtpSentTo = "";
+          cartifyVerifiedPhone = "";
+        }
+      }
+    });
+  }
+}
+
+/* ------------------------------
+   INITIALIZE
+------------------------------ */
 
 document.addEventListener("DOMContentLoaded", () => {
-  bindOTPForm();
-  loadProducts();
+  setupButtons();
+  setupSearch();
+
   updateCartCount();
+  renderCart();
 
-  document.getElementById("searchInput")
-    ?.addEventListener("input", filterProducts);
-
-  document.getElementById("categoryFilter")
-    ?.addEventListener("change", filterProducts);
+  // Keep the OTP UI usable even if products fail to load.
+  loadProducts();
 });
